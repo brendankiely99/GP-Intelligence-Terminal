@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geopolitica — Intelligence Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1117;
+  --bg2:#131720;
+  --bg3:#1a2030;
+  --bg4:#222840;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.11);
+  --text:#e2e8f4;
+  --text2:#8892a4;
+  --text3:#4a5568;
+  --accent:#f5a623;
+  --accent2:rgba(245,166,35,0.12);
+  --blue:#4f9cf9;
+  --blue2:rgba(79,156,249,0.12);
+  --green:#3ecf8e;
+  --green2:rgba(62,207,142,0.1);
+  --red:#f16063;
+  --red2:rgba(241,96,99,0.1);
+  --teal:#38bdf8;
+  --purple:#a78bfa;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  height:42px;padding:0 18px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border2);
+  position:relative;z-index:50;flex-shrink:0;
+}
+.nav-left{display:flex;align-items:center;gap:14px}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-mark{
+  width:26px;height:26px;border-radius:5px;
+  background:linear-gradient(135deg,var(--accent) 0%,#e8820a 100%);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.logo-mark svg{width:14px;height:14px;fill:#0e1117}
+.logo-name{font-size:14px;font-weight:600;letter-spacing:0.01em;color:var(--text)}
+.logo-sub{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);font-family:var(--mono)}
+.nav-divider{width:1px;height:20px;background:var(--border2)}
+.live-badge{
+  display:flex;align-items:center;gap:5px;
+  font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--green);font-family:var(--mono);
+}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-time{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.04em}
+.btn{
+  font-size:11px;font-weight:500;padding:4px 12px;border-radius:5px;cursor:pointer;
+  border:1px solid var(--border2);background:transparent;color:var(--text2);
+  font-family:var(--sans);transition:all .15s;letter-spacing:0.02em;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#0e1117;font-weight:600}
+.btn-accent:hover{opacity:.85;color:#0e1117}
+
+/* ── TICKER ── */
+.ticker{
+  height:28px;display:flex;align-items:center;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  overflow:hidden;padding:0 18px;gap:0;flex-shrink:0;
+}
+.ticker-inner{display:flex;gap:28px;white-space:nowrap;animation:scroll-ticker 60s linear infinite}
+.ticker-inner:hover{animation-play-state:paused}
+@keyframes scroll-ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tick{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;flex-shrink:0}
+.tick-sym{color:var(--text3);font-weight:500}
+.tick-val{color:var(--text)}
+.tick-up{color:var(--green)}
+.tick-dn{color:var(--red)}
+.tick-sep{color:var(--border2);margin:0 4px}
+
+/* ── LAYOUT ── */
+.workspace{display:flex;height:calc(100vh - 70px);overflow:hidden}
+
+/* ── NEWS COLUMN ── */
+.news-col{
+  width:320px;flex-shrink:0;
+  background:var(--bg2);
+  border-right:1px solid var(--accent);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+.news-col::after{
+  content:'';position:absolute;right:0;top:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent,var(--accent) 15%,var(--accent) 85%,transparent);
+}
+.col-header{
+  padding:10px 14px 8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.col-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)}
+.feed-filter{display:flex;gap:4px}
+.filter-btn{
+  font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;cursor:pointer;border:1px solid transparent;
+  background:transparent;color:var(--text3);transition:all .12s;font-family:var(--sans);
+}
+.filter-btn.on{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.filter-btn:hover:not(.on){color:var(--text2)}
+.news-scroll{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.news-scroll::-webkit-scrollbar{width:3px}
+.news-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.story{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .1s;
+}
+.story:hover{background:var(--bg3)}
+.story-meta{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.s-tag{
+  font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;
+  padding:1px 5px;border-radius:2px;
+}
+.t-geo{background:var(--blue2);color:var(--blue)}
+.t-afr{background:var(--green2);color:var(--green)}
+.t-ag{background:var(--accent2);color:var(--accent)}
+.t-dev{background:rgba(167,139,250,.12);color:var(--purple)}
+.s-time{font-family:var(--mono);font-size:9px;color:var(--text3)}
+.s-source{font-size:9px;color:var(--text3)}
+.story-title{font-size:12px;color:var(--text);line-height:1.45;font-weight:400}
+.story-title a{color:inherit;text-decoration:none}
+.story-title a:hover{color:var(--accent)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;padding:16px 20px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.kpi-card{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  padding:12px 14px;position:relative;overflow:hidden;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent) 50%,transparent);
+  opacity:0.6;
+}
+.kpi-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.kpi-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);line-height:1;margin-bottom:4px}
+.kpi-chg{font-family:var(--mono);font-size:11px;display:flex;align-items:center;gap:4px}
+.kpi-spark{margin-top:8px;height:32px;width:100%}
+canvas.spark{width:100%;height:32px;display:block}
+
+/* ── SECTION ── */
+.section{margin-bottom:16px}
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.section-title{
+  font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--text3);display:flex;align-items:center;gap:7px;
+}
+.section-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.dot-blue{background:var(--blue)}
+.dot-green{background:var(--green)}
+.dot-amber{background:var(--accent)}
+.dot-purple{background:var(--purple)}
+.section-note{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+/* ── DATA TABLE ── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table tr{border-bottom:1px solid var(--border);transition:background .1s}
+.data-table tr:last-child{border-bottom:none}
+.data-table tr:hover{background:var(--bg3)}
+.data-table td{padding:7px 10px;vertical-align:middle}
+.dt-name{font-size:12px;color:var(--text2);text-align:left}
+.dt-sub{font-size:10px;color:var(--text3);display:block}
+.dt-val{font-family:var(--mono);font-size:12px;color:var(--text);text-align:right}
+.dt-chg{font-family:var(--mono);font-size:11px;text-align:right}
+.dt-bar{width:80px;text-align:right}
+.mini-bar{height:3px;border-radius:2px;display:inline-block;min-width:4px;vertical-align:middle}
+
+/* ── WIDGET GRID ── */
+.widget-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.widget{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  overflow:hidden;
+}
+.widget-head{
+  padding:9px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.widget-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:6px}
+.widget-body{padding:8px 0}
+.drag-handle{color:var(--text3);cursor:grab;font-size:12px;opacity:.4;user-select:none}
+.drag-handle:hover{opacity:.8}
+.widget.dragging{opacity:.5;border:1px dashed var(--accent)}
+.widget.drag-over{border-color:var(--accent);background:var(--accent2)}
+
+/* ── RISK GAUGE ── */
+.risk-row{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--border)}
+.risk-row:last-child{border-bottom:none}
+.risk-region{font-size:11px;color:var(--text2)}
+.risk-bar-wrap{flex:1;margin:0 10px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.risk-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.risk-num{font-family:var(--mono);font-size:11px;min-width:24px;text-align:right}
+.r-low{color:var(--green);background:var(--green)}
+.r-med{color:#f5a623;background:var(--accent)}
+.r-high{color:var(--red);background:var(--red)}
+
+/* ── LINKS WIDGET ── */
+.link-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.link-item{
+  background:var(--bg2);padding:8px 12px;
+  font-size:11px;color:var(--text3);text-decoration:none;
+  display:flex;align-items:center;gap:6px;
+  transition:background .1s,color .1s;
+}
+.link-item:hover{background:var(--bg3);color:var(--accent)}
+.link-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:24px;width:440px;max-width:95vw}
+.modal-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.modal-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1}
+.modal-x:hover{color:var(--text)}
+.f-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.f-row{margin-bottom:14px}
+.f-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;
+  color:var(--text);font-size:12px;padding:7px 10px;font-family:var(--mono);
+}
+.f-input:focus{outline:none;border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.spinner{display:inline-block;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg>
+      </div>
+      <div>
+        <div class="logo-name" id="brand-display">Geopolitica</div>
+        <div class="logo-sub">Intelligence Terminal</div>
+      </div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+  </div>
+  <div class="nav-right">
+    <span class="nav-time" id="nav-clock"></span>
+    <button class="btn" onclick="openModal()">⚙ Customize</button>
+    <button class="btn btn-accent" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker-inner">
+    <span class="tick"><span class="tick-sym">LOADING</span><span class="tick-val">—</span></span>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- NEWS COLUMN -->
+  <aside class="news-col">
+    <div class="col-header">
+      <span class="col-title">Wire feed</span>
+      <div class="feed-filter">
+        <button class="filter-btn on" data-f="all" onclick="filterFeed('all',this)">All</button>
+        <button class="filter-btn" data-f="geo" onclick="filterFeed('geo',this)">Geo</button>
+        <button class="filter-btn" data-f="afr" onclick="filterFeed('afr',this)">Africa</button>
+        <button class="filter-btn" data-f="ag" onclick="filterFeed('ag',this)">Ag</button>
+        <button class="filter-btn" data-f="dev" onclick="filterFeed('dev',this)">Dev</button>
+      </div>
+    </div>
+    <div class="news-scroll" id="news-scroll">
+      <div style="padding:20px 14px;color:var(--text3);font-size:12px;"><span class="spinner"></span>Loading wire feed…</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main-area">
+
+    <!-- KPI row -->
+    <div class="kpi-row" id="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">S&P 500</div>
+        <div class="kpi-val" id="kpi-spy">—</div>
+        <div class="kpi-chg" id="kpi-spy-chg"><span class="spinner"></span></div>
+        <div class="kpi-spark"><canvas class="spark" id="spark-spy"></canvas></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Nasdaq (QQQ)</div>
+        <div class="kpi-val" id="kpi-qqq">—</div>
+        <div class="kpi-chg" id="kpi-qqq-chg"><span class="spinner"></span></div>
+        <div class="kpi-spark"><canvas class="spark" id="spark-qqq"></canvas></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dow Jones (DIA)</div>
+        <div class="kpi-val" id="kpi-dia">—</div>
+        <div class="kpi-chg" id="kpi-dia-chg"><span class="spinner"></span></div>
+        <div class="kpi-spark"><canvas class="spark" id="spark-dia"></canvas></div>
+      </div>
+    </div>
+
+    <!-- DRAGGABLE WIDGETS -->
+    <div class="widget-grid" id="widget-grid">
+
+      <!-- Currencies -->
+      <div class="widget" draggable="true" id="w-currencies" data-wid="currencies">
+        <div class="widget-head">
+          <span class="widget-title"><span class="section-dot dot-blue"></span>Currency indicators</span>
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+        </div>
+        <div class="widget-body">
+          <table class="data-table" id="currency-table">
+            <tr><td colspan="3" style="padding:12px;color:var(--text3)"><span class="spinner"></span> Loading…</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Commodities -->
+      <div class="widget" draggable="true" id="w-commodities" data-wid="commodities">
+        <div class="widget-head">
+          <span class="widget-title"><span class="section-dot dot-amber"></span>Commodities</span>
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+        </div>
+        <div class="widget-body">
+          <table class="data-table" id="commodity-table">
+            <tr><td colspan="3" style="padding:12px;color:var(--text3)"><span class="spinner"></span> Loading…</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Risk monitor -->
+      <div class="widget" draggable="true" id="w-risk" data-wid="risk">
+        <div class="widget-head">
+          <span class="widget-title"><span class="section-dot dot-amber"></span>Regional risk monitor</span>
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+        </div>
+        <div class="widget-body" id="risk-body">
+          <div class="risk-row"><span class="risk-region">East Africa</span><div class="risk-bar-wrap"><div class="risk-bar-fill r-med" style="width:62%"></div></div><span class="risk-num r-med">6.2</span></div>
+          <div class="risk-row"><span class="risk-region">West Africa</span><div class="risk-bar-wrap"><div class="risk-bar-fill r-high" style="width:78%"></div></div><span class="risk-num r-high">7.8</span></div>
+          <div class="risk-row"><span class="risk-region">Horn of Africa</span><div class="risk-bar-wrap"><div class="risk-bar-fill r-high" style="width:83%"></div></div><span class="risk-num r-high">8.3</span></div>
+          <div class="risk-row"><span class="risk-region">Middle East</span><div class="risk-bar-wrap"><div class="risk-bar-fill r-high" style="width:84%"></div></div><span class="risk-num r-high">8.4</span></div>
+          <div class="risk-row"><span class="risk-region">Europe</span><div class="risk-bar-wrap"><div class="risk-bar-fill r-med" style="width:51%"></div></div><span class="risk-num r-med">5.1</span></div>
+          <div class="risk-row"><span class="risk-region">Asia-Pacific</span><div class="risk-bar-wrap"><div class="risk-bar-fill r-med" style="width:55%"></div></div><span class="risk-num r-med">5.5</span></div>
+        </div>
+      </div>
+
+      <!-- Quick links -->
+      <div class="widget" draggable="true" id="w-links" data-wid="links">
+        <div class="widget-head">
+          <span class="widget-title"><span class="section-dot dot-purple"></span>Sources</span>
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+        </div>
+        <div class="link-grid">
+          <a class="link-item" href="https://www.devex.com" target="_blank"><span class="link-dot" style="background:var(--purple)"></span>Devex</a>
+          <a class="link-item" href="https://foreignpolicy.com" target="_blank"><span class="link-dot" style="background:var(--blue)"></span>Foreign Policy</a>
+          <a class="link-item" href="https://www.fao.org/newsroom/en/" target="_blank"><span class="link-dot" style="background:var(--accent)"></span>FAO</a>
+          <a class="link-item" href="https://www.afdb.org/en/news-and-events" target="_blank"><span class="link-dot" style="background:var(--green)"></span>AfDB</a>
+          <a class="link-item" href="https://www.imf.org/en/Publications/REO/SSA" target="_blank"><span class="link-dot" style="background:var(--blue)"></span>IMF Africa</a>
+          <a class="link-item" href="https://www.worldbank.org/en/region/afr" target="_blank"><span class="link-dot" style="background:var(--green)"></span>World Bank</a>
+          <a class="link-item" href="https://african.business" target="_blank"><span class="link-dot" style="background:var(--accent)"></span>African Business</a>
+          <a class="link-item" href="https://www.aljazeera.com" target="_blank"><span class="link-dot" style="background:var(--red)"></span>Al Jazeera</a>
+          <a class="link-item" href="https://reliefweb.int" target="_blank"><span class="link-dot" style="background:var(--purple)"></span>ReliefWeb</a>
+          <a class="link-item" href="https://www.reuters.com/business/agriculture/" target="_blank"><span class="link-dot" style="background:var(--accent)"></span>Reuters Ag</a>
+        </div>
+      </div>
+
+    </div><!-- /widget-grid -->
+
+    <!-- Bond yields + dev finance -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title"><span class="section-dot dot-green"></span>Bond yields & development finance</span>
+        <span class="section-note" id="bonds-note">est. values</span>
+      </div>
+      <table class="data-table">
+        <tr><td class="dt-name">US 10-Year Treasury<span class="dt-sub">Global benchmark</span></td><td class="dt-val" id="b-us10y">—</td><td class="dt-chg" id="bc-us10y">—</td></tr>
+        <tr><td class="dt-name">IMF SDR Rate<span class="dt-sub">Dev financing benchmark</span></td><td class="dt-val">~4.30%</td><td class="dt-chg" style="color:var(--text3)">Weekly</td></tr>
+        <tr><td class="dt-name">World Bank IBRD Rate<span class="dt-sub">Project lending</span></td><td class="dt-val">~6.88%</td><td class="dt-chg" style="color:var(--text3)">Quarterly</td></tr>
+        <tr><td class="dt-name">EM Bond Spread (EMB)<span class="dt-sub">Emerging market risk</span></td><td class="dt-val" id="b-emb">—</td><td class="dt-chg" id="bc-emb">—</td></tr>
+        <tr><td class="dt-name">VIX Volatility Index<span class="dt-sub">Global market fear gauge</span></td><td class="dt-val" id="b-vix">—</td><td class="dt-chg" id="bc-vix">—</td></tr>
+      </table>
+    </div>
+
+    <div style="padding-bottom:20px;font-size:11px;color:var(--text3);font-family:var(--mono);text-align:right" id="last-updated">Initializing…</div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title">
+      Customize terminal
+      <button class="modal-x" onclick="closeModal()">×</button>
+    </div>
+    <div class="f-row">
+      <div class="f-label">Terminal / product name</div>
+      <input class="f-input" id="cfg-name" placeholder="Geopolitica" />
+    </div>
+    <div class="f-row">
+      <div class="f-label">African currencies to track (comma separated)</div>
+      <input class="f-input" id="cfg-currencies" placeholder="KES, UGX, TZS, MWK" />
+    </div>
+    <div class="f-row">
+      <div class="f-label">Extra market tickers</div>
+      <input class="f-input" id="cfg-tickers" placeholder="e.g. EWZ, AGG" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveConfig()">Save & apply</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────
+const MARKET_SYMS = [
+  {sym:'SPY',  label:'S&P 500',      kpi:'spy'},
+  {sym:'QQQ',  label:'Nasdaq',        kpi:'qqq'},
+  {sym:'DIA',  label:'Dow Jones',     kpi:'dia'},
+  {sym:'WEAT', label:'Wheat',         cat:'commodity'},
+  {sym:'GLD',  label:'Gold',          cat:'commodity'},
+  {sym:'USO',  label:'Crude Oil',     cat:'commodity'},
+  {sym:'DBC',  label:'Commodities',   cat:'commodity'},
+  {sym:'EMB',  label:'EM Bonds',      cat:'bond'},
+  {sym:'VIXY', label:'VIX',           cat:'bond'},
+];
+
+const CURRENCY_ROWS = [
+  {label:'USD/EUR',  sub:'Euro',              id:'USD/EUR',  est:'0.9218'},
+  {label:'USD/GBP',  sub:'British pound',     id:'USD/GBP',  est:'0.7841'},
+  {label:'DXY proxy',sub:'Dollar index',      id:'UUP',      isTicker:true},
+  {label:'KES/USD',  sub:'Kenyan shilling',   id:'KES',      est:'~129.4'},
+  {label:'UGX/USD',  sub:'Ugandan shilling',  id:'UGX',      est:'~3,720'},
+  {label:'TZS/USD',  sub:'Tanzanian shilling',id:'TZS',      est:'~2,548'},
+  {label:'MWK/USD',  sub:'Malawian kwacha',   id:'MWK',      est:'~1,735'},
+];
+
+const FALLBACK_NEWS = {
+  geo:[
+    {title:'UN Security Council convenes on Sudan humanitarian corridor access',src:'Reuters',url:'https://www.reuters.com/world/'},
+    {title:'NATO allies debate expanded eastern flank presence after summit',src:'Foreign Policy',url:'https://foreignpolicy.com'},
+    {title:'Red Sea disruptions persist as Houthi strikes continue shipping lanes',src:'BBC World',url:'https://www.bbc.com/news/world'},
+    {title:'G7 coordinates response to emerging market debt stress',src:'FT',url:'https://www.ft.com'},
+    {title:'South China Sea: Philippines-US naval exercise draws Beijing warning',src:'Al Jazeera',url:'https://www.aljazeera.com'},
+    {title:'African Union summit: climate adaptation financing tops agenda',src:'African Business',url:'https://african.business'},
+  ],
+  afr:[
+    {title:'Kenya shilling stabilizes as CBK holds rate amid inflation pressure',src:'African Business',url:'https://african.business'},
+    {title:'Tanzania infrastructure corridor draws $2.4B Gulf investment pledge',src:'AfDB',url:'https://www.afdb.org'},
+    {title:'Uganda oil pipeline: EACOP construction update and timeline revision',src:'Reuters',url:'https://www.reuters.com'},
+    {title:'IMF Malawi review: debt restructuring on track, conditionalities met',src:'IMF',url:'https://www.imf.org'},
+    {title:'Rwanda outperforms regional peers with 7.2% GDP growth in H1 2026',src:'World Bank',url:'https://www.worldbank.org'},
+    {title:'East African Community monetary union framework delayed to 2028',src:'African Business',url:'https://african.business'},
+  ],
+  ag:[
+    {title:'East Africa maize prices spike 18% as La Niña drought conditions spread',src:'FAO',url:'https://www.fao.org'},
+    {title:'Global food security index: SSA vulnerability elevated second straight quarter',src:'Reuters',url:'https://www.reuters.com'},
+    {title:'Fertilizer supply tightens ahead of East Africa October planting season',src:'Bloomberg',url:'https://www.bloomberg.com'},
+    {title:'AGRA: smallholder productivity gap widens without targeted input subsidies',src:'AGRA',url:'https://agra.org'},
+    {title:'Wheat futures settle lower on extended Black Sea corridor agreement',src:'Reuters Ag',url:'https://www.reuters.com/business/agriculture/'},
+  ],
+  dev:[
+    {title:'USAID funding realignment reshapes East African program landscape',src:'Devex',url:'https://www.devex.com'},
+    {title:'Regenerative agriculture rises in SSA donor funding priorities for 2027',src:'Guardian Dev',url:'https://www.theguardian.com/global-development'},
+    {title:'World Bank approves $480M rural development package for East Africa',src:'World Bank',url:'https://www.worldbank.org'},
+    {title:'UNDP: climate adaptation funding gap widens in low-income nations',src:'UNDP',url:'https://www.undp.org'},
+    {title:'NGO coalitions push revised humanitarian access framework at Geneva talks',src:'ReliefWeb',url:'https://reliefweb.int'},
+  ],
+};
+
+const TAG = {geo:'t-geo',afr:'t-afr',ag:'t-ag',dev:'t-dev'};
+const TAG_LABEL = {geo:'Geopolitics',afr:'Africa',ag:'Agriculture',dev:'Development'};
+let allStories = [];
+let currentFilter = 'all';
+let marketData = {};
+let sparkCharts = {};
+
+// ── CLOCK ───────────────────────────────────────────────
+function clock(){
+  const n = new Date();
+  document.getElementById('nav-clock').textContent =
+    n.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
+    n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
+}
+
+// ── MARKETS ─────────────────────────────────────────────
+async function loadMarkets(){
+  const syms = MARKET_SYMS.map(m=>m.sym).join(',');
+  try{
+    const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(syms)}&range=1d&interval=15m`);
+    if(!r.ok) throw new Error();
+    const d = await r.json();
+    const results = d.spark?.result||[];
+    results.forEach(item=>{
+      if(!item?.symbol) return;
+      const resp = item.response?.[0];
+      if(!resp) return;
+      const closes = resp.indicators?.quote?.[0]?.close?.filter(v=>v!=null)||[];
+      const opens  = resp.indicators?.quote?.[0]?.open?.filter(v=>v!=null)||[];
+      const timestamps = resp.timestamp||[];
+      if(closes.length){
+        marketData[item.symbol]={
+          last:closes[closes.length-1],
+          open:opens[0]||closes[0],
+          closes,timestamps
+        };
+      }
+    });
+    renderMarkets();
+  }catch(e){
+    renderMarketsOffline();
+  }
+}
+
+function pct(sym){
+  const d=marketData[sym];
+  if(!d) return null;
+  return (d.last-d.open)/d.open*100;
+}
+
+function fmtChg(c,val){
+  if(c===null) return '<span style="color:var(--text3)">—</span>';
+  const cls = c>=0?'tick-up':'tick-dn';
+  const arr = c>=0?'▲':'▼';
+  const extra = val!==undefined ? ` <span style="color:var(--text3);font-size:10px">$${val.toFixed(2)}</span>` : '';
+  return `<span class="${cls}">${arr} ${Math.abs(c).toFixed(2)}%${extra}</span>`;
+}
+
+function drawSpark(canvasId, closes, up){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas||!closes||closes.length<2) return;
+  if(sparkCharts[canvasId]) sparkCharts[canvasId].destroy();
+  const color = up ? '#3ecf8e' : '#f16063';
+  sparkCharts[canvasId] = new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:closes.map((_,i)=>i),
+      datasets:[{data:closes,borderColor:color,borderWidth:1.5,fill:true,
+        backgroundColor: up?'rgba(62,207,142,0.08)':'rgba(241,96,99,0.08)',
+        pointRadius:0,tension:0.3}]
+    },
+    options:{
+      responsive:false,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false}},
+      animation:{duration:400}
+    }
+  });
+}
+
+function renderMarkets(){
+  // KPI cards
+  [['SPY','spy'],['QQQ','qqq'],['DIA','dia']].forEach(([sym,id])=>{
+    const d=marketData[sym];
+    const val=document.getElementById('kpi-'+id);
+    const chgEl=document.getElementById('kpi-'+id+'-chg');
+    if(d){
+      val.textContent='$'+d.last.toFixed(2);
+      const c=pct(sym);
+      chgEl.innerHTML=fmtChg(c);
+      drawSpark('spark-'+id, d.closes, c>=0);
+    } else {
+      val.textContent='—';
+      chgEl.innerHTML='<span style="color:var(--text3)">offline</span>';
+    }
+  });
+
+  // Ticker tape
+  const ticks = MARKET_SYMS.map(m=>{
+    const d=marketData[m.sym];
+    const label=m.label;
+    if(!d) return `<span class="tick"><span class="tick-sym">${label}</span><span class="tick-val">—</span></span><span class="tick-sep">|</span>`;
+    const c=pct(m.sym);
+    const cls=c>=0?'tick-up':'tick-dn';
+    const arr=c>=0?'▲':'▼';
+    return `<span class="tick"><span class="tick-sym">${label}</span><span class="tick-val">$${d.last.toFixed(2)}</span><span class="${cls}">${arr}${Math.abs(c).toFixed(2)}%</span></span><span class="tick-sep">|</span>`;
+  }).join('');
+  document.getElementById('ticker-inner').innerHTML = ticks+ticks; // duplicate for seamless loop
+
+  // Currency table — DXY proxy from UUP
+  const uup=marketData['UUP'];
+  const curRows = CURRENCY_ROWS.map(row=>{
+    if(row.isTicker && uup){
+      const c=pct('UUP');
+      return `<tr><td class="dt-name">${row.label}<span class="dt-sub">${row.sub}</span></td>
+        <td class="dt-val">$${uup.last.toFixed(2)}</td>
+        <td class="dt-chg">${fmtChg(c)}</td></tr>`;
+    }
+    return `<tr><td class="dt-name">${row.label}<span class="dt-sub">${row.sub}</span></td>
+      <td class="dt-val" style="color:var(--text)">${row.est}</td>
+      <td class="dt-chg" style="color:var(--text3)">Est.</td></tr>`;
+  }).join('');
+  document.getElementById('currency-table').innerHTML = curRows;
+
+  // Commodity table
+  const COMM=[
+    {sym:'WEAT',label:'Wheat ETF',sub:'WEAT'},
+    {sym:'GLD', label:'Gold ETF',sub:'GLD'},
+    {sym:'USO', label:'Crude Oil ETF',sub:'USO'},
+    {sym:'DBC', label:'Commodities',sub:'DBC'},
+  ];
+  const commRows = COMM.map(c=>{
+    const d=marketData[c.sym];
+    if(!d) return `<tr><td class="dt-name">${c.label}<span class="dt-sub">${c.sub}</span></td><td class="dt-val">—</td><td class="dt-chg" style="color:var(--text3)">—</td></tr>`;
+    const ch=pct(c.sym);
+    const barW=Math.min(100,Math.abs(ch)*8);
+    const barCol=ch>=0?'var(--green)':'var(--red)';
+    return `<tr>
+      <td class="dt-name">${c.label}<span class="dt-sub">${c.sub}</span></td>
+      <td class="dt-val">$${d.last.toFixed(2)}</td>
+      <td class="dt-chg">${fmtChg(ch)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('commodity-table').innerHTML = commRows;
+
+  // Bond/VIX
+  const emb=marketData['EMB'];
+  const vixy=marketData['VIXY'];
+  if(emb){
+    document.getElementById('b-emb').textContent='$'+emb.last.toFixed(2);
+    document.getElementById('bc-emb').innerHTML=fmtChg(pct('EMB'));
+  }
+  if(vixy){
+    document.getElementById('b-vix').textContent='$'+vixy.last.toFixed(2);
+    const vChg=pct('VIXY');
+    document.getElementById('bc-vix').innerHTML=fmtChg(vChg);
+  }
+
+  const t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('last-updated').textContent='Updated '+t+' · Market data via Yahoo Finance · Currency rates estimated';
+}
+
+function renderMarketsOffline(){
+  ['spy','qqq','dia'].forEach(id=>{
+    document.getElementById('kpi-'+id).textContent='—';
+    document.getElementById('kpi-'+id+'-chg').innerHTML='<span style="color:var(--text3)">offline</span>';
+  });
+  document.getElementById('ticker-inner').innerHTML='<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">MARKET DATA UNAVAILABLE — CHECK CONNECTION</span>';
+  document.getElementById('last-updated').textContent='Market data offline — refresh to retry';
+}
+
+// ── NEWS ────────────────────────────────────────────────
+async function fetchRSS(url){
+  const proxy=`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=6`;
+  const r=await fetch(proxy);
+  if(!r.ok) throw new Error();
+  const d=await r.json();
+  if(d.status!=='ok') throw new Error();
+  return d.items||[];
+}
+
+function timeAgo(str){
+  if(!str) return '—';
+  const d=new Date(str);
+  if(isNaN(d)) return '—';
+  const m=Math.floor((Date.now()-d)/60000);
+  if(m<60) return m+'m';
+  if(m<1440) return Math.floor(m/60)+'h';
+  return Math.floor(m/1440)+'d';
+}
+
+async function loadNews(){
+  const feeds = {
+    geo:['https://feeds.bbci.co.uk/news/world/rss.xml','https://rss.nytimes.com/services/xml/rss/nyt/World.xml'],
+    afr:['https://www.theguardian.com/world/africa/rss','https://feeds.bbci.co.uk/news/world/africa/rss.xml'],
+    ag: ['https://www.theguardian.com/environment/food/rss'],
+    dev:['https://www.theguardian.com/global-development/rss'],
+  };
+  allStories=[];
+  for(const [cat, urls] of Object.entries(feeds)){
+    let got=false;
+    for(const url of urls){
+      try{
+        const items=await fetchRSS(url);
+        items.slice(0,5).forEach(item=>{
+          allStories.push({cat,title:item.title,src:item.author||'Source',url:item.link,time:timeAgo(item.pubDate)});
+        });
+        got=true; break;
+      }catch(e){}
+    }
+    if(!got){
+      (FALLBACK_NEWS[cat]||[]).forEach(fb=>{
+        allStories.push({cat,title:fb.title,src:fb.src,url:fb.url,time:'—'});
+      });
+    }
+  }
+  renderNews();
+}
+
+function renderNews(){
+  const filtered = currentFilter==='all' ? allStories : allStories.filter(s=>s.cat===currentFilter);
+  const html = filtered.map(s=>`
+    <div class="story" data-cat="${s.cat}">
+      <div class="story-meta">
+        <span class="s-tag ${TAG[s.cat]}">${TAG_LABEL[s.cat]}</span>
+        <span class="s-time">${s.time}</span>
+        <span class="s-source">${s.src}</span>
+      </div>
+      <div class="story-title"><a href="${s.url}" target="_blank">${s.title}</a></div>
+    </div>`).join('');
+  document.getElementById('news-scroll').innerHTML = html||'<div style="padding:16px;color:var(--text3)">No stories found.</div>';
+}
+
+function filterFeed(f, btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderNews();
+}
+
+// ── DRAG & DROP WIDGETS ──────────────────────────────────
+let dragSrc=null;
+document.querySelectorAll('.widget').forEach(w=>{
+  w.addEventListener('dragstart',e=>{dragSrc=w;w.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+  w.addEventListener('dragend',()=>{dragSrc=null;document.querySelectorAll('.widget').forEach(x=>x.classList.remove('dragging','drag-over'))});
+  w.addEventListener('dragover',e=>{e.preventDefault();if(dragSrc&&dragSrc!==w) w.classList.add('drag-over')});
+  w.addEventListener('dragleave',()=>w.classList.remove('drag-over'));
+  w.addEventListener('drop',e=>{
+    e.preventDefault();
+    if(dragSrc&&dragSrc!==w){
+      const grid=document.getElementById('widget-grid');
+      const nodes=[...grid.children];
+      const srcIdx=nodes.indexOf(dragSrc);
+      const tgtIdx=nodes.indexOf(w);
+      if(srcIdx<tgtIdx) grid.insertBefore(dragSrc,w.nextSibling);
+      else grid.insertBefore(dragSrc,w);
+    }
+    document.querySelectorAll('.widget').forEach(x=>x.classList.remove('drag-over'));
+  });
+});
+
+// ── CONFIG ──────────────────────────────────────────────
+function openModal(){document.getElementById('modal').classList.add('open');loadConfigUI()}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function loadConfigUI(){
+  document.getElementById('cfg-name').value=localStorage.getItem('geo-name')||'';
+  document.getElementById('cfg-currencies').value=localStorage.getItem('geo-currencies')||'KES, UGX, TZS, MWK';
+  document.getElementById('cfg-tickers').value=localStorage.getItem('geo-tickers')||'';
+}
+function saveConfig(){
+  const name=document.getElementById('cfg-name').value.trim();
+  localStorage.setItem('geo-name',name);
+  localStorage.setItem('geo-currencies',document.getElementById('cfg-currencies').value);
+  localStorage.setItem('geo-tickers',document.getElementById('cfg-tickers').value);
+  if(name) document.getElementById('brand-display').textContent=name;
+  closeModal();
+  loadAll();
+}
+function applyConfig(){
+  const name=localStorage.getItem('geo-name');
+  if(name) document.getElementById('brand-display').textContent=name;
+}
+
+// ── INIT ────────────────────────────────────────────────
+async function loadAll(){
+  await Promise.all([loadMarkets(), loadNews()]);
+}
+
+setInterval(clock,1000);
+clock();
+applyConfig();
+loadAll();
+</script>
+</body>
+</html>
