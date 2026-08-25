@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GP Intelligence Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1117;--bg2:#131720;--bg3:#1a2030;--bg4:#222840;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --text:#e2e8f4;--text2:#8892a4;--text3:#4a5568;
+  --accent:#f5a623;--accent2:rgba(245,166,35,0.12);
+  --blue:#4f9cf9;--blue2:rgba(79,156,249,0.12);
+  --green:#3ecf8e;--green2:rgba(62,207,142,0.1);
+  --red:#f16063;--purple:#a78bfa;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
+
+/* ── NAV ── */
+nav{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  height:56px;padding:0 20px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border2);
+  flex-shrink:0;position:relative;z-index:50;
+}
+.nav-left{display:flex;align-items:center;gap:12px}
+.logo-mark{width:36px;height:36px;flex-shrink:0}
+.logo-svg{width:36px;height:36px}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;font-weight:600;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--green);font-family:var(--mono);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.nav-center{
+  font-size:15px;font-weight:600;letter-spacing:0.04em;
+  color:var(--text);text-align:center;white-space:nowrap;
+}
+.nav-right{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.nav-time{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.04em}
+.btn{font-size:11px;font-weight:500;padding:5px 13px;border-radius:5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--sans);transition:all .15s}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#0e1117;font-weight:600}
+.btn-accent:hover{opacity:.85;color:#0e1117}
+
+/* ── TICKER ── */
+.ticker{
+  height:36px;display:flex;align-items:center;
+  background:var(--bg2);border-bottom:1px solid var(--border2);
+  overflow:hidden;flex-shrink:0;
+}
+.ticker-track{
+  display:flex;white-space:nowrap;
+  animation:scroll-left 100s linear infinite;
+  will-change:transform;
+}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes scroll-left{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tick{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;
+  padding:0 22px;border-right:1px solid var(--border);
+  height:36px;flex-shrink:0;
+}
+.tick-sym{color:var(--text3);font-weight:500;letter-spacing:0.05em;font-size:10px}
+.tick-val{color:var(--text);font-weight:500}
+.tick-unit{color:var(--text3);font-size:9px}
+.up{color:var(--green)}.dn{color:var(--red)}.flat{color:var(--text3)}
+
+/* ── LAYOUT ── */
+.workspace{display:flex;height:calc(100vh - 92px);overflow:hidden}
+
+/* ── NEWS COLUMN ── */
+.news-col{
+  width:360px;flex-shrink:0;background:var(--bg2);
+  display:flex;flex-direction:column;overflow:hidden;position:relative;
+}
+.news-col::after{
+  content:'';position:absolute;right:0;top:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent,var(--accent) 12%,var(--accent) 88%,transparent);
+}
+.col-header{
+  padding:10px 14px 9px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.col-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)}
+.feed-filter{display:flex;gap:3px}
+.fbtn{font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text3);transition:all .12s;font-family:var(--sans)}
+.fbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.fbtn:hover:not(.on){color:var(--text2)}
+.news-scroll{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.news-scroll::-webkit-scrollbar{width:3px}
+.news-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── STORY CARD ── */
+.story{
+  padding:12px 14px;border-bottom:1px solid var(--border);
+  transition:background .1s;display:flex;gap:10px;align-items:flex-start;
+}
+.story:hover{background:var(--bg3)}
+.story-logo{
+  width:32px;height:32px;border-radius:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;letter-spacing:0.04em;
+  font-family:var(--mono);margin-top:2px;
+}
+.story-body{flex:1;min-width:0}
+.story-meta{display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap}
+.s-tag{font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:1px 5px;border-radius:2px}
+.t-geo{background:var(--blue2);color:var(--blue)}
+.t-afr{background:var(--green2);color:var(--green)}
+.t-ag{background:var(--accent2);color:var(--accent)}
+.t-dev{background:rgba(167,139,250,.12);color:var(--purple)}
+.s-time{font-family:var(--mono);font-size:9px;color:var(--text3)}
+.story-title{font-size:12px;color:var(--text);line-height:1.4;font-weight:500;margin-bottom:4px}
+.story-title a{color:inherit;text-decoration:none}
+.story-title a:hover{color:var(--accent)}
+.story-snippet{font-size:11px;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Source logo colors */
+.logo-bbc{background:#1a1a1a;color:#e4141c}
+.logo-guardian{background:#052962;color:#c70000}
+.logo-reuters{background:#ff8000;color:#fff}
+.logo-fao{background:#1a5276;color:#85c1e9}
+.logo-devex{background:#003087;color:#7eb8f7}
+.logo-wb{background:#009fda;color:#fff}
+.logo-imf{background:#004b87;color:#7eb8f7}
+.logo-afdb{background:#006b3f;color:#90ee90}
+.logo-aj{background:#c8102e;color:#fff}
+.logo-rw{background:#e8732a;color:#fff}
+.logo-nyt{background:#000;color:#fff}
+.logo-default{background:var(--bg4);color:var(--text3)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;padding:16px 18px 24px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  padding:12px 14px;position:relative;overflow:hidden;
+  cursor:default;
+}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent) 50%,transparent);opacity:.45}
+.kpi-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.kpi-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);line-height:1;margin-bottom:3px}
+.kpi-chg{font-family:var(--mono);font-size:11px}
+
+/* ── CHART ── */
+.chart-section{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  padding:14px;margin-bottom:14px;
+}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chart-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:7px}
+.chart-legend{display:flex;gap:14px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);font-family:var(--mono)}
+.leg-line{width:18px;height:2px;border-radius:1px;flex-shrink:0}
+.chart-note{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.chart-wrap{position:relative;height:200px}
+.chart-wrap canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
+
+/* ── PLACEHOLDER SECTIONS ── */
+.placeholder-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.placeholder-card{
+  background:var(--bg2);border:1px dashed var(--border2);border-radius:8px;
+  padding:24px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;min-height:140px;
+}
+.ph-icon{font-size:24px;margin-bottom:8px;opacity:.3}
+.ph-title{font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;letter-spacing:0.04em}
+.ph-sub{font-size:10px;color:var(--text3);opacity:.6;line-height:1.5}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:24px;width:440px;max-width:95vw}
+.modal-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.mx{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1}
+.mx:hover{color:var(--text)}
+.f-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.f-row{margin-bottom:14px}
+.f-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:12px;padding:7px 10px;font-family:var(--mono)}
+.f-input:focus{outline:none;border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+.spin{display:inline-block;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spinning .8s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spinning{to{transform:rotate(360deg)}}
+.loading-row{padding:16px;color:var(--text3);font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <svg class="logo-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="60" height="60" rx="12" fill="#131720"/>
+      <circle cx="30" cy="30" r="19" stroke="rgba(255,255,255,0.16)" stroke-width="0.8" fill="none"/>
+      <ellipse cx="30" cy="30" rx="19" ry="7" stroke="rgba(255,255,255,0.10)" stroke-width="0.7" fill="none"/>
+      <ellipse cx="30" cy="30" rx="19" ry="13" stroke="rgba(255,255,255,0.08)" stroke-width="0.7" fill="none"/>
+      <line x1="11" y1="30" x2="49" y2="30" stroke="rgba(255,255,255,0.10)" stroke-width="0.7"/>
+      <line x1="30" y1="11" x2="30" y2="49" stroke="rgba(255,255,255,0.10)" stroke-width="0.7"/>
+      <ellipse cx="30" cy="30" rx="7" ry="19" stroke="rgba(255,255,255,0.08)" stroke-width="0.7" fill="none"/>
+      <ellipse cx="30" cy="30" rx="13" ry="19" stroke="rgba(255,255,255,0.07)" stroke-width="0.7" fill="none"/>
+      <text x="30" y="35.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="14" fill="white" letter-spacing="1">GP</text>
+    </svg>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+  </div>
+
+  <div class="nav-center" id="brand-name">GP Intelligence Terminal</div>
+
+  <div class="nav-right">
+    <span class="nav-time" id="nav-clock"></span>
+    <button class="btn" onclick="openModal()">⚙ Customize</button>
+    <button class="btn btn-accent" onclick="manualRefresh()">↻ Refresh</button>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track" id="ticker-track">
+    <span class="tick"><span class="tick-sym">LOADING</span><span class="tick-val">—</span></span>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- NEWS COLUMN -->
+  <aside class="news-col">
+    <div class="col-header">
+      <span class="col-title">Wire feed</span>
+      <div class="feed-filter">
+        <button class="fbtn on" onclick="filterNews('all',this)">All</button>
+        <button class="fbtn" onclick="filterNews('geo',this)">Geo</button>
+        <button class="fbtn" onclick="filterNews('afr',this)">Africa</button>
+        <button class="fbtn" onclick="filterNews('ag',this)">Ag</button>
+        <button class="fbtn" onclick="filterNews('dev',this)">Dev</button>
+      </div>
+    </div>
+    <div class="news-scroll" id="news-feed">
+      <div class="loading-row"><span class="spin"></span>Loading wire feed…</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">S&P 500 · SPY</div>
+        <div class="kpi-val" id="v-SPY">—</div>
+        <div class="kpi-chg" id="c-SPY"><span class="spin"></span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Nasdaq 100 · QQQ</div>
+        <div class="kpi-val" id="v-QQQ">—</div>
+        <div class="kpi-chg" id="c-QQQ"><span class="spin"></span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dow Jones · DIA</div>
+        <div class="kpi-val" id="v-DIA">—</div>
+        <div class="kpi-chg" id="c-DIA"><span class="spin"></span></div>
+      </div>
+    </div>
+
+    <!-- COMBINED TREND CHART -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <span class="chart-title">US markets — session trend</span>
+        <div class="chart-legend">
+          <span class="leg-item"><span class="leg-line" style="background:#4f9cf9"></span>S&P 500</span>
+          <span class="leg-item"><span class="leg-line" style="background:#3ecf8e"></span>Nasdaq</span>
+          <span class="leg-item"><span class="leg-line" style="background:#f5a623"></span>Dow</span>
+        </div>
+      </div>
+      <div class="chart-note" id="chart-note" style="margin-bottom:10px;font-size:10px;color:var(--text3)">Chart builds as data accumulates during your session — richer over time</div>
+      <div class="chart-wrap"><canvas id="main-chart" role="img" aria-label="Combined trend chart for S&P 500, Nasdaq, and Dow Jones"></canvas></div>
+    </div>
+
+    <!-- PLACEHOLDER SECTIONS -->
+    <div class="placeholder-grid">
+      <div class="placeholder-card">
+        <div class="ph-icon">＋</div>
+        <div class="ph-title">Section coming soon</div>
+        <div class="ph-sub">This panel is reserved for a custom section you'll define</div>
+      </div>
+      <div class="placeholder-card">
+        <div class="ph-icon">＋</div>
+        <div class="ph-title">Section coming soon</div>
+        <div class="ph-sub">This panel is reserved for a custom section you'll define</div>
+      </div>
+      <div class="placeholder-card">
+        <div class="ph-icon">＋</div>
+        <div class="ph-title">Section coming soon</div>
+        <div class="ph-sub">This panel is reserved for a custom section you'll define</div>
+      </div>
+      <div class="placeholder-card">
+        <div class="ph-icon">＋</div>
+        <div class="ph-title">Section coming soon</div>
+        <div class="ph-sub">This panel is reserved for a custom section you'll define</div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-align:right;padding-bottom:8px" id="footer-note">Initializing…</div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title">Customize terminal <button class="mx" onclick="closeModal()">×</button></div>
+    <div class="f-row">
+      <div class="f-label">Terminal name</div>
+      <input class="f-input" id="cfg-name" placeholder="GP Intelligence Terminal"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveConfig()">Save & apply</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const FKEY = 'da708l1r01qqqkkhib1gda708l1r01qqqkkhib20';
+const BASE = 'https://finnhub.io/api/v1';
+
+const INDEX_SYMS  = ['SPY','QQQ','DIA'];
+const TICKER_SYMS = ['GLD','USO','CPER','UNG','EMB','VIXY','EWU','EWJ'];
+const TICKER_META = {
+  GLD:  {label:'Gold',   unit:'/oz'},
+  USO:  {label:'Oil',    unit:'/bbl'},
+  CPER: {label:'Copper', unit:'/lb'},
+  UNG:  {label:'Nat Gas',unit:'/MMBtu'},
+  EMB:  {label:'EM Bonds',unit:''},
+  VIXY: {label:'VIX',   unit:''},
+  EWU:  {label:'FTSE',  unit:''},
+  EWJ:  {label:'Nikkei',unit:''},
+};
+
+const ALL_SYMS = [...new Set([...INDEX_SYMS,...TICKER_SYMS])];
+
+// Session price history — banks data across refreshes
+const history = {};
+ALL_SYMS.forEach(s => history[s] = {times:[], prices:[]});
+
+// Normalized history for the combined chart (percent change from first price)
+let mainChart = null;
+let currentFilter = 'all';
+let allStories = [];
+let nextRefresh = 300;
+
+// ── CLOCK ──────────────────────────────────────────────
+function clock(){
+  const n = new Date();
+  document.getElementById('nav-clock').textContent =
+    n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' · ' +
+    n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
+  nextRefresh--;
+  if(nextRefresh <= 0){ nextRefresh = 300; refreshMarkets(); }
+}
+
+// ── FINNHUB ─────────────────────────────────────────────
+async function getQuote(sym){
+  const r = await fetch(`${BASE}/quote?symbol=${sym}&token=${FKEY}`);
+  if(!r.ok) throw new Error();
+  const d = await r.json();
+  if(!d || !d.c || d.c === 0) throw new Error();
+  return d;
+}
+
+function fmtPct(dp){
+  if(dp === null || dp === undefined || isNaN(dp))
+    return '<span style="color:var(--text3)">—</span>';
+  const cls = dp > 0 ? 'up' : dp < 0 ? 'dn' : 'flat';
+  const arr = dp > 0 ? '▲' : dp < 0 ? '▼' : '▸';
+  return `<span class="${cls}">${arr} ${Math.abs(dp).toFixed(2)}%</span>`;
+}
+function fmtVal(c){ return (!c || isNaN(c)) ? '—' : '$' + c.toFixed(2); }
+
+// ── MAIN CHART (normalised % change from session open) ──
+function initMainChart(){
+  const canvas = document.getElementById('main-chart');
+  mainChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {label:'S&P 500', data:[], borderColor:'#4f9cf9', borderWidth:2, fill:false, pointRadius:0, tension:0.3},
+        {label:'Nasdaq',  data:[], borderColor:'#3ecf8e', borderWidth:2, fill:false, pointRadius:0, tension:0.3},
+        {label:'Dow',     data:[], borderColor:'#f5a623', borderWidth:2, fill:false, pointRadius:0, tension:0.3},
+      ]
+    },
+    options:{
+      responsive:false, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          mode:'index', intersect:false,
+          backgroundColor:'#1a2030', titleColor:'#8892a4', bodyColor:'#e2e8f4',
+          borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
+          callbacks:{
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toFixed(2)}%`
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#4a5568',font:{size:9,family:'JetBrains Mono'},maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'}},
+        y:{
+          ticks:{color:'#4a5568',font:{size:9,family:'JetBrains Mono'},callback:v=>(v>=0?'+':'')+v.toFixed(1)+'%'},
+          grid:{color:'rgba(255,255,255,0.04)'},
+          border:{color:'rgba(255,255,255,0.06)'},
+          position:'right'
+        }
+      },
+      interaction:{mode:'nearest',axis:'x',intersect:false},
+      animation:{duration:400}
+    }
+  });
+}
+
+function updateMainChart(){
+  if(!mainChart) return;
+  const syms = ['SPY','QQQ','DIA'];
+  const maxLen = Math.max(...syms.map(s => history[s].times.length));
+  if(maxLen < 2) return;
+
+  // Use the longest time series as labels
+  const longestSym = syms.find(s => history[s].times.length === maxLen);
+  mainChart.data.labels = history[longestSym].times;
+
+  syms.forEach((sym, i) => {
+    const prices = history[sym].prices;
+    if(prices.length < 1) return;
+    const base = prices[0];
+    mainChart.data.datasets[i].data = prices.map(p => parseFloat(((p - base) / base * 100).toFixed(3)));
+  });
+
+  mainChart.update('none');
+  document.getElementById('chart-note').textContent =
+    `${history['SPY'].prices.length} data points · refreshes every 5 min · % change from session open`;
+}
+
+// ── LOAD MARKETS ────────────────────────────────────────
+async function refreshMarkets(){
+  const results = {};
+  const timeStr = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  await Promise.allSettled(ALL_SYMS.map(async sym => {
+    try{
+      const q = await getQuote(sym);
+      results[sym] = q;
+      history[sym].times.push(timeStr);
+      history[sym].prices.push(q.c);
+      // Cap at 100 data points per session
+      if(history[sym].prices.length > 100){
+        history[sym].times.shift();
+        history[sym].prices.shift();
+      }
+    }catch(e){}
+  }));
+
+  // KPI cards
+  INDEX_SYMS.forEach(sym => {
+    const q = results[sym];
+    const vEl = document.getElementById('v-'+sym);
+    const cEl = document.getElementById('c-'+sym);
+    if(!vEl) return;
+    if(q){ vEl.textContent = fmtVal(q.c); cEl.innerHTML = fmtPct(q.dp); }
+    else { vEl.textContent = '—'; cEl.innerHTML = '<span style="color:var(--text3)">—</span>'; }
+  });
+
+  // Ticker — with units
+  const ticks = TICKER_SYMS.map(sym => {
+    const q = results[sym];
+    const m = TICKER_META[sym] || {label:sym, unit:''};
+    if(!q) return `<span class="tick"><span class="tick-sym">${m.label}</span><span class="tick-val">—</span></span>`;
+    const cls = q.d >= 0 ? 'up' : 'dn';
+    const arr = q.d >= 0 ? '▲' : '▼';
+    return `<span class="tick">
+      <span class="tick-sym">${m.label}</span>
+      <span class="tick-val">${fmtVal(q.c)}<span class="tick-unit">${m.unit}</span></span>
+      <span class="${cls}">${arr}${Math.abs(q.dp||0).toFixed(2)}%</span>
+    </span>`;
+  }).join('');
+  document.getElementById('ticker-track').innerHTML = ticks + ticks;
+
+  updateMainChart();
+
+  const t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('footer-note').textContent =
+    `Market data via Finnhub · Updated ${t} · Auto-refreshes every 5 min`;
+}
+
+// ── NEWS ────────────────────────────────────────────────
+const RSS = {
+  geo: ['https://feeds.bbci.co.uk/news/world/rss.xml','https://rss.nytimes.com/services/xml/rss/nyt/World.xml'],
+  afr: ['https://www.theguardian.com/world/africa/rss','https://feeds.bbci.co.uk/news/world/africa/rss.xml'],
+  ag:  ['https://www.theguardian.com/environment/food/rss'],
+  dev: ['https://www.theguardian.com/global-development/rss','https://reliefweb.int/updates/rss.xml'],
+};
+
+const SOURCE_LOGOS = {
+  'bbc':      {cls:'logo-bbc',   abbr:'BBC'},
+  'guardian': {cls:'logo-guardian',abbr:'GRD'},
+  'reuters':  {cls:'logo-reuters',abbr:'REU'},
+  'fao':      {cls:'logo-fao',   abbr:'FAO'},
+  'devex':    {cls:'logo-devex', abbr:'DVX'},
+  'world bank':{cls:'logo-wb',   abbr:'WB'},
+  'imf':      {cls:'logo-imf',   abbr:'IMF'},
+  'afdb':     {cls:'logo-afdb',  abbr:'ADB'},
+  'al jazeera':{cls:'logo-aj',   abbr:'AJ'},
+  'reliefweb':{cls:'logo-rw',    abbr:'RW'},
+  'nytimes':  {cls:'logo-nyt',   abbr:'NYT'},
+};
+
+function getLogoInfo(src){
+  const s = (src||'').toLowerCase();
+  for(const [key, val] of Object.entries(SOURCE_LOGOS)){
+    if(s.includes(key)) return val;
+  }
+  const abbr = (src||'?').substring(0,3).toUpperCase();
+  return {cls:'logo-default', abbr};
+}
+
+const FALLBACK = {
+  geo:[
+    {title:'UN Security Council convenes on Sudan humanitarian corridor access',snippet:'The UN Security Council held emergency talks on humanitarian access routes to Sudan amid escalating conflict, with members divided on proposed sanctions measures.',src:'Reuters',url:'https://www.reuters.com/world/'},
+    {title:'NATO allies debate expanded eastern flank presence',snippet:'Alliance members discussed troop rotations and infrastructure investments along NATO\'s eastern borders, signaling sustained commitment to regional deterrence.',src:'Foreign Policy',url:'https://foreignpolicy.com'},
+    {title:'Red Sea disruptions persist as regional conflict continues',snippet:'Shipping traffic through the Red Sea remains suppressed as vessels continue to reroute around the Cape of Good Hope, adding cost and time to global supply chains.',src:'BBC',url:'https://www.bbc.com/news/world'},
+    {title:'G7 coordinates emerging market debt stress response',snippet:'Finance ministers discussed coordinated mechanisms to address debt distress in low-income nations, with Sub-Saharan Africa identified as the most acute area of concern.',src:'Reuters',url:'https://www.reuters.com'},
+  ],
+  afr:[
+    {title:'Kenya shilling stabilizes as CBK holds rate amid inflation',snippet:'The Central Bank of Kenya maintained its benchmark rate, citing progress on inflation while acknowledging external headwinds from commodity prices and dollar strength.',src:'African Business',url:'https://african.business'},
+    {title:'Tanzania infrastructure corridor draws Gulf investment pledge',snippet:'Gulf sovereign wealth funds signaled interest in Tanzania\'s northern transport corridor, which would connect landlocked nations to Dar es Salaam\'s port.',src:'AfDB',url:'https://www.afdb.org'},
+    {title:'IMF Malawi review: debt restructuring on track',snippet:'The IMF confirmed Malawi\'s debt restructuring program is meeting benchmarks, clearing the way for the next tranche of balance-of-payments support.',src:'IMF',url:'https://www.imf.org'},
+    {title:'Rwanda outperforms regional peers with 7.2% GDP growth',snippet:'Rwanda\'s economy expanded 7.2% in the first half of 2026, driven by services and tourism, significantly above the Sub-Saharan Africa average.',src:'World Bank',url:'https://www.worldbank.org'},
+  ],
+  ag:[
+    {title:'East Africa maize prices spike as La Niña drought conditions spread',snippet:'Below-average rainfall across the Horn of Africa and parts of East Africa is pushing staple grain prices higher, with the most severe impacts in Kenya and Ethiopia.',src:'FAO',url:'https://www.fao.org'},
+    {title:'Global food security index: SSA vulnerability elevated second quarter',snippet:'Sub-Saharan Africa recorded its second consecutive quarter of elevated food insecurity risk, driven by climate shocks, conflict, and currency depreciation.',src:'Reuters',url:'https://www.reuters.com'},
+    {title:'Fertilizer supply tightens ahead of East Africa planting season',snippet:'Global fertilizer markets remain constrained, with East African smallholders facing input costs 40% above pre-2022 levels heading into the October planting season.',src:'Reuters',url:'https://www.reuters.com'},
+  ],
+  dev:[
+    {title:'USAID funding realignment reshapes East African program landscape',snippet:'Shifts in US foreign assistance priorities are forcing East African NGOs and implementing partners to restructure programs, with health and food security sectors most affected.',src:'Devex',url:'https://www.devex.com'},
+    {title:'Regenerative agriculture rises in SSA donor funding priorities',snippet:'Major bilateral and multilateral donors are increasing allocations for regenerative and climate-smart agriculture in Sub-Saharan Africa, responding to soil degradation and yield gaps.',src:'Guardian',url:'https://www.theguardian.com/global-development'},
+    {title:'World Bank approves $480M rural development package for East Africa',snippet:'The new package targets smallholder farmers in Uganda, Tanzania, and Kenya, focusing on market access, storage infrastructure, and climate adaptation.',src:'World Bank',url:'https://www.worldbank.org'},
+    {title:'UNDP: climate adaptation funding gap widens in low-income nations',snippet:'A new UNDP report finds that adaptation finance flows to low-income countries cover less than 10% of estimated needs, with the gap growing each year.',src:'ReliefWeb',url:'https://reliefweb.int'},
+  ],
+};
+
+const TAG_CLS = {geo:'t-geo',afr:'t-afr',ag:'t-ag',dev:'t-dev'};
+const TAG_LBL = {geo:'Geopolitics',afr:'Africa',ag:'Agriculture',dev:'Development'};
+
+function timeAgo(str){
+  if(!str) return '—';
+  const d = new Date(str); if(isNaN(d)) return '—';
+  const m = Math.floor((Date.now()-d)/60000);
+  if(m < 60) return m+'m'; if(m < 1440) return Math.floor(m/60)+'h';
+  return Math.floor(m/1440)+'d';
+}
+
+async function fetchRSS(url){
+  const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=5`);
+  if(!r.ok) throw new Error();
+  const d = await r.json();
+  if(d.status !== 'ok') throw new Error();
+  return d.items || [];
+}
+
+async function loadNews(){
+  allStories = [];
+  for(const [cat, urls] of Object.entries(RSS)){
+    let loaded = false;
+    for(const url of urls){
+      try{
+        const items = await fetchRSS(url);
+        items.slice(0,5).forEach(item => {
+          const snippet = item.description
+            ? item.description.replace(/<[^>]+>/g,'').substring(0,160).trim() + '…'
+            : '';
+          allStories.push({cat, title:item.title, snippet, src:item.author||'Source', url:item.link||'#', time:timeAgo(item.pubDate)});
+        });
+        loaded = true; break;
+      }catch(e){}
+    }
+    if(!loaded){
+      (FALLBACK[cat]||[]).forEach(fb => allStories.push({cat, ...fb, time:'—'}));
+    }
+  }
+  renderNews();
+}
+
+function storyHTML(s){
+  const logo = getLogoInfo(s.src);
+  return `<div class="story">
+    <div class="story-logo ${logo.cls}">${logo.abbr}</div>
+    <div class="story-body">
+      <div class="story-meta">
+        <span class="s-tag ${TAG_CLS[s.cat]}">${TAG_LBL[s.cat]}</span>
+        <span class="s-time">${s.time}</span>
+      </div>
+      <div class="story-title"><a href="${s.url}" target="_blank">${s.title}</a></div>
+      ${s.snippet ? `<div class="story-snippet">${s.snippet}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderNews(){
+  const list = currentFilter === 'all' ? allStories : allStories.filter(s => s.cat === currentFilter);
+  document.getElementById('news-feed').innerHTML = list.length
+    ? list.map(storyHTML).join('')
+    : '<div class="loading-row">No stories found.</div>';
+}
+
+function filterNews(f, btn){
+  currentFilter = f;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderNews();
+}
+
+// ── CONFIG ──────────────────────────────────────────────
+function openModal(){ document.getElementById('cfg-name').value = localStorage.getItem('gp-name')||''; document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function saveConfig(){
+  const name = document.getElementById('cfg-name').value.trim();
+  if(name){ document.getElementById('brand-name').textContent = name; document.title = name; }
+  localStorage.setItem('gp-name', name);
+  closeModal();
+}
+function applyConfig(){ const n = localStorage.getItem('gp-name'); if(n){ document.getElementById('brand-name').textContent = n; document.title = n; } }
+function manualRefresh(){ nextRefresh = 300; refreshMarkets(); }
+
+// ── INIT ────────────────────────────────────────────────
+applyConfig();
+initMainChart();
+setInterval(clock, 1000);
+clock();
+Promise.all([refreshMarkets(), loadNews()]);
+</script>
+</body>
+</html>
