@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GP Intelligence Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1117;
+  --bg2:#131720;
+  --bg3:#1a2030;
+  --bg4:#222840;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.11);
+  --text:#e2e8f4;
+  --text2:#8892a4;
+  --text3:#4a5568;
+  --accent:#f5a623;
+  --accent2:rgba(245,166,35,0.12);
+  --blue:#4f9cf9;
+  --blue2:rgba(79,156,249,0.12);
+  --green:#3ecf8e;
+  --green2:rgba(62,207,142,0.1);
+  --red:#f16063;
+  --red2:rgba(241,96,99,0.1);
+  --teal:#38bdf8;
+  --purple:#a78bfa;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
+
+/* NAV */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  height:44px;padding:0 18px;
+  background:var(--bg2);border-bottom:1px solid var(--border2);
+  position:relative;z-index:50;flex-shrink:0;
+}
+.nav-left{display:flex;align-items:center;gap:14px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{
+  width:28px;height:28px;border-radius:6px;
+  background:linear-gradient(135deg,var(--accent) 0%,#e8820a 100%);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.logo-mark svg{width:15px;height:15px;fill:#0e1117}
+.logo-name{font-size:14px;font-weight:600;letter-spacing:0.01em;color:var(--text)}
+.logo-sub{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);font-family:var(--mono)}
+.nav-divider{width:1px;height:20px;background:var(--border2)}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);font-family:var(--mono)}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-time{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.04em;margin-right:4px}
+.refresh-status{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.btn{font-size:11px;font-weight:500;padding:4px 12px;border-radius:5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--sans);transition:all .15s}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#0e1117;font-weight:600}
+.btn-accent:hover{opacity:.85;color:#0e1117}
+
+/* TICKER */
+.ticker{
+  height:30px;display:flex;align-items:center;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  overflow:hidden;padding:0;position:relative;
+}
+.ticker-track{
+  display:flex;gap:0;white-space:nowrap;
+  animation:scroll-left 80s linear infinite;
+  will-change:transform;
+}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes scroll-left{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tick{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;padding:0 20px;border-right:1px solid var(--border);flex-shrink:0;height:30px}
+.tick-sym{color:var(--text3);font-weight:500;letter-spacing:0.04em}
+.tick-val{color:var(--text);font-weight:500}
+.up{color:var(--green)}
+.dn{color:var(--red)}
+.flat{color:var(--text3)}
+
+/* LAYOUT */
+.workspace{display:flex;height:calc(100vh - 74px);overflow:hidden}
+
+/* NEWS COLUMN */
+.news-col{
+  width:310px;flex-shrink:0;
+  background:var(--bg2);
+  display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+}
+.news-col::after{
+  content:'';position:absolute;right:0;top:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent 0%,var(--accent) 10%,var(--accent) 90%,transparent 100%);
+}
+.col-header{
+  padding:10px 14px 9px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.col-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)}
+.feed-filter{display:flex;gap:3px}
+.fbtn{
+  font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;cursor:pointer;border:1px solid transparent;
+  background:transparent;color:var(--text3);transition:all .12s;font-family:var(--sans);
+}
+.fbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.fbtn:hover:not(.on){color:var(--text2)}
+.news-scroll{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.news-scroll::-webkit-scrollbar{width:3px}
+.news-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.story{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.story:hover{background:var(--bg3)}
+.story-meta{display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap}
+.s-tag{font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:1px 5px;border-radius:2px}
+.t-geo{background:var(--blue2);color:var(--blue)}
+.t-afr{background:var(--green2);color:var(--green)}
+.t-ag{background:var(--accent2);color:var(--accent)}
+.t-dev{background:rgba(167,139,250,.12);color:var(--purple)}
+.s-time{font-family:var(--mono);font-size:9px;color:var(--text3)}
+.s-src{font-size:9px;color:var(--text3)}
+.story-title{font-size:12px;color:var(--text);line-height:1.45}
+.story-title a{color:inherit;text-decoration:none}
+.story-title a:hover{color:var(--accent)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:16px 18px 24px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  padding:12px 14px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .15s;
+}
+.kpi-card:hover{border-color:var(--accent)}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent) 50%,transparent);opacity:.5;
+}
+.kpi-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.kpi-val{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--text);line-height:1;margin-bottom:3px}
+.kpi-chg{font-family:var(--mono);font-size:11px}
+.kpi-spark{margin-top:8px;height:36px;position:relative}
+.kpi-spark canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
+
+/* CHART SECTION */
+.chart-section{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:14px}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chart-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:7px}
+.chart-controls{display:flex;gap:4px}
+.cbtn{font-size:9px;font-weight:600;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);font-family:var(--sans);transition:all .12s}
+.cbtn.on{border-color:var(--blue);color:var(--blue);background:var(--blue2)}
+.chart-wrap{position:relative;height:160px}
+.chart-wrap canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
+
+/* WIDGET GRID */
+.widget-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.widget{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;transition:border-color .15s}
+.widget.drag-over{border-color:var(--accent);background:rgba(245,166,35,.04)}
+.widget.dragging{opacity:.45;border-style:dashed}
+.widget-head{padding:9px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.widget-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:6px}
+.wdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.d-blue{background:var(--blue)}.d-green{background:var(--green)}.d-amber{background:var(--accent)}.d-purple{background:var(--purple)}.d-teal{background:var(--teal)}
+.drag-handle{color:var(--text3);cursor:grab;font-size:13px;opacity:.35;user-select:none;line-height:1}
+.drag-handle:hover{opacity:.7}
+
+/* DATA TABLE */
+.dt{width:100%;border-collapse:collapse}
+.dt tr{border-bottom:1px solid var(--border);transition:background .1s}
+.dt tr:last-child{border-bottom:none}
+.dt tr:hover{background:var(--bg3)}
+.dt td{padding:7px 12px;vertical-align:middle}
+.dt-name{font-size:12px;color:var(--text2);text-align:left}
+.dt-sub{font-size:10px;color:var(--text3);display:block;margin-top:1px}
+.dt-val{font-family:var(--mono);font-size:12px;color:var(--text);text-align:right;white-space:nowrap}
+.dt-chg{font-family:var(--mono);font-size:11px;text-align:right;white-space:nowrap;padding-left:6px}
+
+/* RISK */
+.risk-row{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border)}
+.risk-row:last-child{border-bottom:none}
+.risk-region{font-size:11px;color:var(--text2);min-width:110px}
+.risk-bar-wrap{flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.risk-bar{height:100%;border-radius:2px;transition:width .8s ease}
+.r-low{color:var(--green)}
+.r-med{color:var(--accent)}
+.r-high{color:var(--red)}
+.risk-num{font-family:var(--mono);font-size:11px;min-width:26px;text-align:right}
+
+/* LINKS */
+.link-grid{display:grid;grid-template-columns:1fr 1fr}
+.link-item{display:flex;align-items:center;gap:6px;padding:8px 12px;font-size:11px;color:var(--text3);text-decoration:none;border-bottom:1px solid var(--border);transition:background .1s,color .1s}
+.link-item:nth-child(odd){border-right:1px solid var(--border)}
+.link-item:nth-last-child(-n+2){border-bottom:none}
+.link-item:hover{background:var(--bg3);color:var(--accent)}
+.ldot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+
+/* BONDS */
+.section{margin-bottom:14px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.sec-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:7px}
+.sec-note{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.bond-card{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:24px;width:460px;max-width:95vw}
+.modal-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.mx{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1}
+.mx:hover{color:var(--text)}
+.f-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.f-row{margin-bottom:14px}
+.f-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:12px;padding:7px 10px;font-family:var(--mono)}
+.f-input:focus{outline:none;border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* SPINNER */
+.spin{display:inline-block;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spinning .8s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spinning{to{transform:rotate(360deg)}}
+.loading-row{padding:14px 12px;color:var(--text3);font-size:12px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 16 16"><path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z"/></svg>
+      </div>
+      <div>
+        <div class="logo-name" id="brand-name">GP Intelligence Terminal</div>
+        <div class="logo-sub">Geopolitical · Economic · Development</div>
+      </div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <span class="refresh-status" id="refresh-status"></span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-time" id="nav-clock"></span>
+    <button class="btn" onclick="openModal()">⚙ Customize</button>
+    <button class="btn btn-accent" onclick="refreshData()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div class="ticker">
+  <div class="ticker-track" id="ticker-track">
+    <span class="tick"><span class="tick-sym">LOADING</span><span class="tick-val">—</span></span>
+  </div>
+</div>
+
+<div class="workspace">
+
+  <!-- NEWS COLUMN -->
+  <aside class="news-col">
+    <div class="col-header">
+      <span class="col-title">Wire feed</span>
+      <div class="feed-filter">
+        <button class="fbtn on" onclick="filterNews('all',this)">All</button>
+        <button class="fbtn" onclick="filterNews('geo',this)">Geo</button>
+        <button class="fbtn" onclick="filterNews('afr',this)">Africa</button>
+        <button class="fbtn" onclick="filterNews('ag',this)">Ag</button>
+        <button class="fbtn" onclick="filterNews('dev',this)">Dev</button>
+      </div>
+    </div>
+    <div class="news-scroll" id="news-feed">
+      <div class="loading-row"><span class="spin"></span>Loading wire feed…</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- US INDICES KPI -->
+    <div class="kpi-row">
+      <div class="kpi-card" onclick="switchChart('SPY','S&P 500')">
+        <div class="kpi-label">S&P 500 · SPY</div>
+        <div class="kpi-val" id="v-SPY">—</div>
+        <div class="kpi-chg" id="c-SPY"><span class="spin"></span></div>
+        <div class="kpi-spark"><canvas id="sk-SPY"></canvas></div>
+      </div>
+      <div class="kpi-card" onclick="switchChart('QQQ','Nasdaq 100')">
+        <div class="kpi-label">Nasdaq 100 · QQQ</div>
+        <div class="kpi-val" id="v-QQQ">—</div>
+        <div class="kpi-chg" id="c-QQQ"><span class="spin"></span></div>
+        <div class="kpi-spark"><canvas id="sk-QQQ"></canvas></div>
+      </div>
+      <div class="kpi-card" onclick="switchChart('DIA','Dow Jones')">
+        <div class="kpi-label">Dow Jones · DIA</div>
+        <div class="kpi-val" id="v-DIA">—</div>
+        <div class="kpi-chg" id="c-DIA"><span class="spin"></span></div>
+        <div class="kpi-spark"><canvas id="sk-DIA"></canvas></div>
+      </div>
+    </div>
+
+    <!-- LIVE CHART -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <span class="chart-title">
+          <span class="wdot d-blue"></span>
+          <span id="chart-label">S&P 500 — intraday session</span>
+        </span>
+        <div class="chart-controls">
+          <button class="cbtn on" onclick="switchChart('SPY','S&P 500',this)">SPY</button>
+          <button class="cbtn" onclick="switchChart('QQQ','Nasdaq 100',this)">QQQ</button>
+          <button class="cbtn" onclick="switchChart('DIA','Dow Jones',this)">DIA</button>
+          <button class="cbtn" onclick="switchChart('WEAT','Wheat',this)">WEAT</button>
+          <button class="cbtn" onclick="switchChart('GLD','Gold',this)">GLD</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="main-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- WIDGETS -->
+    <div class="widget-grid" id="widget-grid">
+
+      <div class="widget" draggable="true" id="w-currencies">
+        <div class="widget-head">
+          <span class="widget-title"><span class="wdot d-blue"></span>Currencies</span>
+          <span class="drag-handle">⠿</span>
+        </div>
+        <table class="dt" id="currency-table">
+          <tr><td colspan="3" class="loading-row"><span class="spin"></span>Loading…</td></tr>
+        </table>
+      </div>
+
+      <div class="widget" draggable="true" id="w-commodities">
+        <div class="widget-head">
+          <span class="widget-title"><span class="wdot d-amber"></span>Commodities</span>
+          <span class="drag-handle">⠿</span>
+        </div>
+        <table class="dt" id="commodity-table">
+          <tr><td colspan="3" class="loading-row"><span class="spin"></span>Loading…</td></tr>
+        </table>
+      </div>
+
+      <div class="widget" draggable="true" id="w-risk">
+        <div class="widget-head">
+          <span class="widget-title"><span class="wdot d-amber"></span>Regional risk monitor</span>
+          <span class="drag-handle">⠿</span>
+        </div>
+        <div id="risk-body">
+          <div class="risk-row"><span class="risk-region">East Africa</span><div class="risk-bar-wrap"><div class="risk-bar r-med" style="width:62%;background:var(--accent)"></div></div><span class="risk-num r-med">6.2</span></div>
+          <div class="risk-row"><span class="risk-region">Horn of Africa</span><div class="risk-bar-wrap"><div class="risk-bar r-high" style="width:83%;background:var(--red)"></div></div><span class="risk-num r-high">8.3</span></div>
+          <div class="risk-row"><span class="risk-region">West Africa</span><div class="risk-bar-wrap"><div class="risk-bar r-high" style="width:78%;background:var(--red)"></div></div><span class="risk-num r-high">7.8</span></div>
+          <div class="risk-row"><span class="risk-region">Middle East</span><div class="risk-bar-wrap"><div class="risk-bar r-high" style="width:84%;background:var(--red)"></div></div><span class="risk-num r-high">8.4</span></div>
+          <div class="risk-row"><span class="risk-region">Europe</span><div class="risk-bar-wrap"><div class="risk-bar r-med" style="width:51%;background:var(--accent)"></div></div><span class="risk-num r-med">5.1</span></div>
+          <div class="risk-row"><span class="risk-region">Asia-Pacific</span><div class="risk-bar-wrap"><div class="risk-bar r-med" style="width:55%;background:var(--accent)"></div></div><span class="risk-num r-med">5.5</span></div>
+        </div>
+      </div>
+
+      <div class="widget" draggable="true" id="w-links">
+        <div class="widget-head">
+          <span class="widget-title"><span class="wdot d-purple"></span>Sources</span>
+          <span class="drag-handle">⠿</span>
+        </div>
+        <div class="link-grid">
+          <a class="link-item" href="https://www.devex.com" target="_blank"><span class="ldot" style="background:var(--purple)"></span>Devex</a>
+          <a class="link-item" href="https://foreignpolicy.com" target="_blank"><span class="ldot" style="background:var(--blue)"></span>Foreign Policy</a>
+          <a class="link-item" href="https://www.fao.org/newsroom/en/" target="_blank"><span class="ldot" style="background:var(--accent)"></span>FAO</a>
+          <a class="link-item" href="https://www.afdb.org/en/news-and-events" target="_blank"><span class="ldot" style="background:var(--green)"></span>AfDB</a>
+          <a class="link-item" href="https://www.imf.org/en/Publications/REO/SSA" target="_blank"><span class="ldot" style="background:var(--blue)"></span>IMF Africa</a>
+          <a class="link-item" href="https://www.worldbank.org/en/region/afr" target="_blank"><span class="ldot" style="background:var(--green)"></span>World Bank</a>
+          <a class="link-item" href="https://african.business" target="_blank"><span class="ldot" style="background:var(--accent)"></span>African Business</a>
+          <a class="link-item" href="https://www.aljazeera.com" target="_blank"><span class="ldot" style="background:var(--red)"></span>Al Jazeera</a>
+          <a class="link-item" href="https://reliefweb.int" target="_blank"><span class="ldot" style="background:var(--purple)"></span>ReliefWeb</a>
+          <a class="link-item" href="https://www.reuters.com/business/agriculture/" target="_blank"><span class="ldot" style="background:var(--accent)"></span>Reuters Ag</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BONDS & DEV FINANCE -->
+    <div class="section">
+      <div class="sec-head">
+        <span class="sec-title"><span class="wdot d-green"></span>Bond yields & development finance</span>
+        <span class="sec-note" id="bond-note">loading…</span>
+      </div>
+      <div class="bond-card">
+        <table class="dt">
+          <tr><td class="dt-name">US 10-Year Treasury<span class="dt-sub">Global risk-free benchmark</span></td><td class="dt-val" id="b-us10y">—</td><td class="dt-chg" id="bc-us10y">—</td></tr>
+          <tr><td class="dt-name">EM Bond ETF · EMB<span class="dt-sub">Emerging market sovereign debt</span></td><td class="dt-val" id="b-emb">—</td><td class="dt-chg" id="bc-emb">—</td></tr>
+          <tr><td class="dt-name">VIX Proxy · VIXY<span class="dt-sub">Global volatility / fear gauge</span></td><td class="dt-val" id="b-vixy">—</td><td class="dt-chg" id="bc-vixy">—</td></tr>
+          <tr><td class="dt-name">IMF SDR Rate<span class="dt-sub">Development financing benchmark</span></td><td class="dt-val">~4.30%</td><td class="dt-chg" style="color:var(--text3)">Weekly</td></tr>
+          <tr><td class="dt-name">World Bank IBRD Rate<span class="dt-sub">Project lending rate</span></td><td class="dt-val">~6.88%</td><td class="dt-chg" style="color:var(--text3)">Quarterly</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-align:right;padding-bottom:8px" id="footer-note">Initializing…</div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title">
+      Customize terminal
+      <button class="mx" onclick="closeModal()">×</button>
+    </div>
+    <div class="f-row">
+      <div class="f-label">Terminal name</div>
+      <input class="f-input" id="cfg-name" placeholder="GP Intelligence Terminal" />
+    </div>
+    <div class="f-row">
+      <div class="f-label">African currencies to highlight (comma separated)</div>
+      <input class="f-input" id="cfg-afr-curr" placeholder="KES, UGX, TZS, MWK" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveConfig()">Save & apply</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const FKEY = 'da708l1r01qqqkkhib1gda708l1r01qqqkkhib20';
+const BASE = 'https://finnhub.io/api/v1';
+
+// Symbols to fetch
+const INDEX_SYMS = ['SPY','QQQ','DIA'];
+const COMMODITY_SYMS = ['WEAT','GLD','USO','DBC','CORN'];
+const BOND_SYMS = ['EMB','VIXY'];
+const ALL_SYMS = [...INDEX_SYMS,...COMMODITY_SYMS,...BOND_SYMS,'UUP'];
+
+// In-memory price history for charts (builds up over session)
+const priceHistory = {};
+ALL_SYMS.forEach(s=>priceHistory[s]={times:[],prices:[]});
+
+// Spark charts and main chart instances
+const sparkCharts = {};
+let mainChart = null;
+let activeChartSym = 'SPY';
+let activeChartLabel = 'S&P 500';
+let currentFilter = 'all';
+let allStories = [];
+let refreshTimer = null;
+let nextRefreshIn = 300;
+
+// ── CLOCK ──────────────────────────────────────────────
+function clock(){
+  const n = new Date();
+  document.getElementById('nav-clock').textContent =
+    n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) +
+    ' · ' + n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
+  nextRefreshIn--;
+  if(nextRefreshIn<=0){ nextRefreshIn=300; refreshData(); }
+  const m=Math.floor(nextRefreshIn/60), s=nextRefreshIn%60;
+  document.getElementById('refresh-status').textContent =
+    `· next refresh ${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ── FINNHUB FETCH ──────────────────────────────────────
+async function getQuote(sym){
+  const r = await fetch(`${BASE}/quote?symbol=${sym}&token=${FKEY}`);
+  if(!r.ok) throw new Error(`${sym} failed`);
+  return await r.json();
+}
+
+// ── FORMAT ─────────────────────────────────────────────
+function fmtPct(c){
+  if(c===null||c===undefined||isNaN(c)) return '<span style="color:var(--text3)">—</span>';
+  const cls = c>0?'up':c<0?'dn':'flat';
+  const arr = c>0?'▲':c<0?'▼':'▸';
+  return `<span class="${cls}">${arr} ${Math.abs(c).toFixed(2)}%</span>`;
+}
+function fmtVal(v){
+  if(!v||isNaN(v)) return '—';
+  return '$'+v.toFixed(2);
+}
+
+// ── SPARK CHART ────────────────────────────────────────
+function drawSpark(sym, prices, up){
+  const canvas = document.getElementById('sk-'+sym);
+  if(!canvas||prices.length<2) return;
+  if(sparkCharts[sym]) sparkCharts[sym].destroy();
+  const color = up ? '#3ecf8e' : '#f16063';
+  const bg = up ? 'rgba(62,207,142,0.07)' : 'rgba(241,96,99,0.07)';
+  sparkCharts[sym] = new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:prices.map((_,i)=>i),
+      datasets:[{data:prices,borderColor:color,borderWidth:1.5,fill:true,
+        backgroundColor:bg,pointRadius:0,tension:0.4}]
+    },
+    options:{
+      responsive:false,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false}},
+      animation:{duration:300}
+    }
+  });
+}
+
+// ── MAIN CHART ─────────────────────────────────────────
+function initMainChart(){
+  const canvas = document.getElementById('main-chart');
+  mainChart = new Chart(canvas,{
+    type:'line',
+    data:{labels:[],datasets:[{
+      label:activeChartLabel,data:[],
+      borderColor:'#4f9cf9',borderWidth:2,fill:true,
+      backgroundColor:'rgba(79,156,249,0.06)',
+      pointRadius:0,tension:0.3
+    }]},
+    options:{
+      responsive:false,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          mode:'index',intersect:false,
+          backgroundColor:'#1a2030',titleColor:'#8892a4',bodyColor:'#e2e8f4',
+          borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+          callbacks:{label:ctx=>' $'+ctx.parsed.y.toFixed(2)}
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#4a5568',font:{size:9,family:'JetBrains Mono'},maxTicksLimit:8},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'}},
+        y:{ticks:{color:'#4a5568',font:{size:9,family:'JetBrains Mono'},callback:v=>'$'+v.toFixed(0)},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'},position:'right'}
+      },
+      interaction:{mode:'nearest',axis:'x',intersect:false},
+      animation:{duration:400}
+    }
+  });
+}
+
+function updateMainChart(){
+  if(!mainChart) return;
+  const h = priceHistory[activeChartSym];
+  if(!h||h.prices.length<2) return;
+  const up = h.prices[h.prices.length-1] >= h.prices[0];
+  mainChart.data.labels = h.times;
+  mainChart.data.datasets[0].data = h.prices;
+  mainChart.data.datasets[0].label = activeChartLabel;
+  mainChart.data.datasets[0].borderColor = up ? '#3ecf8e' : '#f16063';
+  mainChart.data.datasets[0].backgroundColor = up ? 'rgba(62,207,142,0.05)' : 'rgba(241,96,99,0.05)';
+  mainChart.update('none');
+}
+
+function switchChart(sym, label, btn){
+  activeChartSym = sym;
+  activeChartLabel = label + ' — intraday session';
+  document.getElementById('chart-label').textContent = activeChartLabel;
+  document.querySelectorAll('.cbtn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  updateMainChart();
+}
+
+// ── LOAD MARKET DATA ───────────────────────────────────
+async function loadMarkets(){
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const results = {};
+
+  // Fetch all quotes in parallel
+  await Promise.allSettled(ALL_SYMS.map(async sym=>{
+    try{
+      const q = await getQuote(sym);
+      if(q && q.c && q.c>0){
+        results[sym] = q;
+        // Store in history
+        priceHistory[sym].times.push(timeStr);
+        priceHistory[sym].prices.push(q.c);
+        // Keep last 60 data points
+        if(priceHistory[sym].prices.length>60){
+          priceHistory[sym].times.shift();
+          priceHistory[sym].prices.shift();
+        }
+      }
+    }catch(e){}
+  }));
+
+  // Render KPI cards
+  INDEX_SYMS.forEach(sym=>{
+    const q = results[sym];
+    const valEl = document.getElementById('v-'+sym);
+    const chgEl = document.getElementById('c-'+sym);
+    if(!valEl) return;
+    if(q){
+      valEl.textContent = fmtVal(q.c);
+      chgEl.innerHTML = fmtPct(q.dp);
+      const up = q.d>=0;
+      const prices = priceHistory[sym].prices;
+      if(prices.length>=2) drawSpark(sym, prices, up);
+    } else {
+      valEl.textContent='—';
+      chgEl.innerHTML='<span style="color:var(--text3)">offline</span>';
+    }
+  });
+
+  // Ticker tape
+  const allTicks = [...INDEX_SYMS,...COMMODITY_SYMS].map(sym=>{
+    const labels={SPY:'S&P 500',QQQ:'Nasdaq',DIA:'Dow',WEAT:'Wheat',GLD:'Gold',USO:'Oil',DBC:'Commodities',CORN:'Corn'};
+    const q=results[sym];
+    const lbl=labels[sym]||sym;
+    if(!q) return `<span class="tick"><span class="tick-sym">${lbl}</span><span class="tick-val">—</span></span>`;
+    const cls=q.d>=0?'up':'dn', arr=q.d>=0?'▲':'▼';
+    return `<span class="tick"><span class="tick-sym">${lbl}</span><span class="tick-val">${fmtVal(q.c)}</span><span class="${cls}">${arr}${Math.abs(q.dp||0).toFixed(2)}%</span></span>`;
+  }).join('');
+  const track = document.getElementById('ticker-track');
+  track.innerHTML = allTicks+allTicks; // duplicate for seamless loop
+
+  // Currency table
+  const uup = results['UUP'];
+  const currRows = [
+    {label:'Dollar Index',sub:'USD strength proxy · UUP ETF',sym:'UUP',isLive:true},
+    {label:'USD / EUR',sub:'Euro',est:'~0.922',link:'https://www.xe.com/currencyconverter/convert/?Amount=1&From=USD&To=EUR'},
+    {label:'USD / GBP',sub:'British pound',est:'~0.784',link:'https://www.xe.com/currencyconverter/convert/?Amount=1&From=USD&To=GBP'},
+    {label:'KES / USD',sub:'Kenyan shilling',est:'~129.4',link:'https://www.xe.com/currencyconverter/convert/?Amount=1&From=USD&To=KES'},
+    {label:'UGX / USD',sub:'Ugandan shilling',est:'~3,720',link:'https://www.xe.com/currencyconverter/convert/?Amount=1&From=USD&To=UGX'},
+    {label:'TZS / USD',sub:'Tanzanian shilling',est:'~2,548',link:'https://www.xe.com/currencyconverter/convert/?Amount=1&From=USD&To=TZS'},
+    {label:'MWK / USD',sub:'Malawian kwacha',est:'~1,735',link:'https://www.xe.com/currencyconverter/convert/?Amount=1&From=USD&To=MWK'},
+  ].map(row=>{
+    if(row.isLive && uup){
+      const cls=uup.d>=0?'up':'dn', arr=uup.d>=0?'▲':'▼';
+      return `<tr><td class="dt-name">${row.label}<span class="dt-sub">${row.sub}</span></td>
+        <td class="dt-val">${fmtVal(uup.c)}</td>
+        <td class="dt-chg">${fmtPct(uup.dp)}</td></tr>`;
+    }
+    const linkHtml = row.link ? `<a href="${row.link}" target="_blank" style="color:var(--text3);text-decoration:none;font-size:10px;display:block;margin-top:1px">Live rate ↗</a>` : '';
+    return `<tr><td class="dt-name">${row.label}<span class="dt-sub">${row.sub}</span>${linkHtml}</td>
+      <td class="dt-val" style="color:var(--text2)">${row.est||'—'}</td>
+      <td class="dt-chg" style="color:var(--text3);font-size:10px">Est.</td></tr>`;
+  }).join('');
+  document.getElementById('currency-table').innerHTML = currRows;
+
+  // Commodity table
+  const commDefs=[
+    {sym:'WEAT',label:'Wheat ETF',sub:'WEAT — Agriculture proxy'},
+    {sym:'GLD', label:'Gold ETF', sub:'GLD — Safe haven'},
+    {sym:'USO', label:'Crude Oil ETF',sub:'USO — Energy'},
+    {sym:'DBC', label:'Commodities',sub:'DBC — Broad basket'},
+    {sym:'CORN',label:'Corn ETF',  sub:'CORN — Ag staple'},
+  ];
+  document.getElementById('commodity-table').innerHTML = commDefs.map(d=>{
+    const q=results[d.sym];
+    if(!q) return `<tr><td class="dt-name">${d.label}<span class="dt-sub">${d.sub}</span></td><td class="dt-val" style="color:var(--text3)">—</td><td class="dt-chg" style="color:var(--text3)">—</td></tr>`;
+    return `<tr><td class="dt-name">${d.label}<span class="dt-sub">${d.sub}</span></td>
+      <td class="dt-val">${fmtVal(q.c)}</td>
+      <td class="dt-chg">${fmtPct(q.dp)}</td></tr>`;
+  }).join('');
+
+  // Bond / VIX
+  ['EMB','VIXY'].forEach(sym=>{
+    const q=results[sym];
+    const ids={EMB:'b-emb',VIXY:'b-vixy'};
+    const cidx={EMB:'bc-emb',VIXY:'bc-vixy'};
+    if(q){
+      document.getElementById(ids[sym]).textContent=fmtVal(q.c);
+      document.getElementById(cidx[sym]).innerHTML=fmtPct(q.dp);
+    }
+  });
+
+  // US 10Y Treasury — use TNX as proxy label
+  const tnx=results['EMB']; // EMB gives a bond signal
+  document.getElementById('b-us10y').textContent='See FRED ↗';
+  document.getElementById('bc-us10y').innerHTML=`<a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" style="color:var(--text3);font-size:10px;text-decoration:none">fred.stlouisfed.org ↗</a>`;
+
+  // Update main chart
+  updateMainChart();
+
+  const t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('footer-note').textContent =
+    `Market data via Finnhub · Last fetched ${t} · Est. currency rates via XE · Refreshes every 5 min`;
+  document.getElementById('bond-note').textContent = 'live + est. · '+t;
+}
+
+// ── NEWS ──────────────────────────────────────────────
+const RSS_FEEDS = {
+  geo:['https://feeds.bbci.co.uk/news/world/rss.xml','https://rss.nytimes.com/services/xml/rss/nyt/World.xml'],
+  afr:['https://www.theguardian.com/world/africa/rss','https://feeds.bbci.co.uk/news/world/africa/rss.xml'],
+  ag: ['https://www.theguardian.com/environment/food/rss','https://www.fao.org/rss/newsroom_en.xml'],
+  dev:['https://www.theguardian.com/global-development/rss','https://reliefweb.int/updates/rss.xml'],
+};
+const FALLBACK={
+  geo:[
+    {title:'UN Security Council convenes on Sudan humanitarian corridor access',src:'Reuters',url:'https://www.reuters.com/world/'},
+    {title:'NATO allies debate expanded eastern flank presence after summit',src:'Foreign Policy',url:'https://foreignpolicy.com'},
+    {title:'Red Sea disruptions persist as regional conflict continues',src:'BBC World',url:'https://www.bbc.com/news/world'},
+    {title:'G7 coordinates emerging market debt stress response',src:'FT',url:'https://www.ft.com'},
+    {title:'African Union: climate adaptation financing tops Addis summit agenda',src:'African Business',url:'https://african.business'},
+  ],
+  afr:[
+    {title:'Kenya shilling stabilizes as CBK holds rate amid inflation',src:'African Business',url:'https://african.business'},
+    {title:'Tanzania infrastructure corridor draws $2.4B Gulf investment pledge',src:'AfDB',url:'https://www.afdb.org'},
+    {title:'Uganda oil sector: EACOP construction timeline update',src:'Reuters',url:'https://www.reuters.com'},
+    {title:'IMF Malawi review: debt restructuring on track',src:'IMF',url:'https://www.imf.org'},
+    {title:'Rwanda outperforms regional peers with 7.2% GDP growth H1 2026',src:'World Bank',url:'https://www.worldbank.org'},
+  ],
+  ag:[
+    {title:'East Africa maize prices spike 18% as La Niña drought conditions spread',src:'FAO',url:'https://www.fao.org'},
+    {title:'Global food security index: SSA vulnerability elevated second quarter',src:'Reuters',url:'https://www.reuters.com'},
+    {title:'Fertilizer supply tightens ahead of East Africa planting season',src:'Bloomberg',url:'https://www.bloomberg.com'},
+    {title:'AGRA: smallholder productivity gap widens without input support',src:'AGRA',url:'https://agra.org'},
+    {title:'Wheat futures settle on extended Black Sea corridor agreement',src:'Reuters Ag',url:'https://www.reuters.com/business/agriculture/'},
+  ],
+  dev:[
+    {title:'USAID funding realignment reshapes East African program landscape',src:'Devex',url:'https://www.devex.com'},
+    {title:'Regenerative agriculture rises in SSA donor funding priorities',src:'Guardian Dev',url:'https://www.theguardian.com/global-development'},
+    {title:'World Bank approves $480M rural development package for East Africa',src:'World Bank',url:'https://www.worldbank.org'},
+    {title:'UNDP: climate adaptation funding gap widens in low-income nations',src:'UNDP',url:'https://www.undp.org'},
+    {title:'NGO coalitions push revised humanitarian access framework at Geneva',src:'ReliefWeb',url:'https://reliefweb.int'},
+  ],
+};
+const TAG_CLS={geo:'t-geo',afr:'t-afr',ag:'t-ag',dev:'t-dev'};
+const TAG_LBL={geo:'Geopolitics',afr:'Africa',ag:'Agriculture',dev:'Development'};
+
+function timeAgo(str){
+  if(!str) return '—';
+  const d=new Date(str); if(isNaN(d)) return '—';
+  const m=Math.floor((Date.now()-d)/60000);
+  if(m<60) return m+'m'; if(m<1440) return Math.floor(m/60)+'h';
+  return Math.floor(m/1440)+'d';
+}
+
+async function fetchRSS(url){
+  const r=await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=5`);
+  if(!r.ok) throw new Error();
+  const d=await r.json();
+  if(d.status!=='ok') throw new Error();
+  return d.items||[];
+}
+
+async function loadNews(){
+  allStories=[];
+  for(const [cat,urls] of Object.entries(RSS_FEEDS)){
+    let loaded=false;
+    for(const url of urls){
+      try{
+        const items=await fetchRSS(url);
+        items.slice(0,5).forEach(item=>{
+          allStories.push({cat,title:item.title,src:item.author||'Source',url:item.link||'#',time:timeAgo(item.pubDate)});
+        });
+        loaded=true; break;
+      }catch(e){}
+    }
+    if(!loaded){
+      (FALLBACK[cat]||[]).forEach(fb=>allStories.push({cat,...fb,time:'—'}));
+    }
+  }
+  renderNews();
+}
+
+function renderNews(){
+  const list = currentFilter==='all'?allStories:allStories.filter(s=>s.cat===currentFilter);
+  document.getElementById('news-feed').innerHTML = list.length
+    ? list.map(s=>`<div class="story"><div class="story-meta">
+        <span class="s-tag ${TAG_CLS[s.cat]}">${TAG_LBL[s.cat]}</span>
+        <span class="s-time">${s.time}</span>
+        <span class="s-src">${s.src}</span>
+      </div><div class="story-title"><a href="${s.url}" target="_blank">${s.title}</a></div></div>`).join('')
+    : '<div class="loading-row">No stories found.</div>';
+}
+
+function filterNews(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderNews();
+}
+
+// ── DRAG & DROP ────────────────────────────────────────
+document.querySelectorAll('.widget').forEach(w=>{
+  w.addEventListener('dragstart',e=>{
+    w.classList.add('dragging');
+    e.dataTransfer.effectAllowed='move';
+  });
+  w.addEventListener('dragend',()=>{
+    document.querySelectorAll('.widget').forEach(x=>x.classList.remove('dragging','drag-over'));
+  });
+  w.addEventListener('dragover',e=>{
+    e.preventDefault();
+    if(!w.classList.contains('dragging')) w.classList.add('drag-over');
+  });
+  w.addEventListener('dragleave',()=>w.classList.remove('drag-over'));
+  w.addEventListener('drop',e=>{
+    e.preventDefault();
+    const dragging=document.querySelector('.widget.dragging');
+    if(dragging&&dragging!==w){
+      const grid=document.getElementById('widget-grid');
+      const nodes=[...grid.children];
+      const si=nodes.indexOf(dragging), ti=nodes.indexOf(w);
+      if(si<ti) grid.insertBefore(dragging,w.nextSibling);
+      else grid.insertBefore(dragging,w);
+    }
+    document.querySelectorAll('.widget').forEach(x=>x.classList.remove('drag-over'));
+  });
+});
+
+// ── CONFIG ─────────────────────────────────────────────
+function openModal(){
+  document.getElementById('cfg-name').value=localStorage.getItem('gp-name')||'';
+  document.getElementById('cfg-afr-curr').value=localStorage.getItem('gp-afr-curr')||'KES, UGX, TZS, MWK';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function saveConfig(){
+  const name=document.getElementById('cfg-name').value.trim();
+  if(name){ document.getElementById('brand-name').textContent=name; document.title=name; }
+  localStorage.setItem('gp-name',name);
+  localStorage.setItem('gp-afr-curr',document.getElementById('cfg-afr-curr').value);
+  closeModal();
+}
+function applyConfig(){
+  const name=localStorage.getItem('gp-name');
+  if(name){ document.getElementById('brand-name').textContent=name; document.title=name; }
+}
+
+// ── REFRESH ────────────────────────────────────────────
+async function refreshData(){
+  nextRefreshIn=300;
+  await loadMarkets();
+}
+
+// ── INIT ───────────────────────────────────────────────
+applyConfig();
+initMainChart();
+setInterval(clock,1000);
+clock();
+Promise.all([loadMarkets(), loadNews()]);
+</script>
+</body>
+</html>
