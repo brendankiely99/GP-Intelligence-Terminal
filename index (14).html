@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GP Intelligence Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1117;--bg2:#131720;--bg3:#1a2030;--bg4:#222840;
+  --news-bg:#1e3048;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --news-border:rgba(255,255,255,0.08);
+  --text:#e2e8f4;--text2:#8892a4;--text3:#4a5568;
+  --accent:#f5a623;--accent2:rgba(245,166,35,0.12);
+  --blue:#4f9cf9;--blue2:rgba(79,156,249,0.12);
+  --green:#3ecf8e;--green2:rgba(62,207,142,0.1);
+  --red:#f16063;--purple:#a78bfa;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
+
+/* NAV */
+nav{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;
+  height:64px;padding:0 20px;gap:16px;
+  background:var(--bg2);border-bottom:1px solid var(--border2);
+  flex-shrink:0;z-index:50;
+}
+.nav-left{display:flex;align-items:center;gap:14px}
+.logo-svg{width:52px;height:52px;display:block;flex-shrink:0}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);font-family:var(--mono)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.nav-center{display:flex;align-items:center;gap:4px}
+.nav-tab{font-size:12px;font-weight:500;padding:6px 16px;border-radius:6px;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text3);transition:all .15s;font-family:var(--sans)}
+.nav-tab.active{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.nav-tab:hover:not(.active):not(.soon){color:var(--text2);background:var(--bg3)}
+.nav-tab.soon{opacity:.35;cursor:default}
+.nav-right{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.nav-time{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.btn{font-size:11px;font-weight:500;padding:5px 13px;border-radius:5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--sans);transition:all .15s}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#0e1117;font-weight:600}
+.btn-accent:hover{opacity:.85}
+
+/* TICKER */
+.ticker{height:36px;display:flex;align-items:center;background:var(--bg2);border-bottom:1px solid var(--border2);overflow:hidden;flex-shrink:0}
+.ticker-track{display:flex;white-space:nowrap;animation:scroll-left 120s linear infinite}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes scroll-left{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tick{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;padding:0 20px;border-right:1px solid var(--border);height:36px;flex-shrink:0}
+.tick-sym{color:var(--text3);font-weight:500;font-size:9px;letter-spacing:0.04em}
+.tick-val{color:var(--text);font-weight:500}
+.tick-unit{color:var(--text3);font-size:9px}
+.up{color:var(--green)}.dn{color:var(--red)}
+
+/* LAYOUT */
+.workspace{display:flex;height:calc(100vh - 100px);overflow:hidden}
+
+/* NEWS COLUMN */
+.news-col{
+  width:380px;flex-shrink:0;
+  background:var(--news-bg);
+  display:flex;flex-direction:column;overflow:hidden;position:relative;
+}
+.news-col::after{
+  content:'';position:absolute;right:0;top:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom,transparent 0%,var(--accent) 12%,var(--accent) 88%,transparent 100%);
+  opacity:1;
+}
+.news-tabs{
+  display:flex;padding:8px 10px 0;gap:3px;
+  background:rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;
+}
+.news-tab{
+  font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  padding:5px 10px;border-radius:4px 4px 0 0;cursor:pointer;
+  border:1px solid transparent;border-bottom:none;
+  background:transparent;color:rgba(255,255,255,0.35);
+  transition:all .12s;font-family:var(--sans);
+}
+.news-tab.on{
+  border-color:rgba(255,255,255,0.12);
+  border-bottom-color:var(--news-bg);
+  background:var(--news-bg);color:var(--accent);
+}
+.news-tab:hover:not(.on){color:rgba(255,255,255,0.6)}
+.news-scroll{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.12) transparent}
+.news-scroll::-webkit-scrollbar{width:3px}
+.news-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.05);border-radius:2px}
+
+/* STORY */
+.story{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.06);transition:background .1s;display:flex;gap:10px;align-items:flex-start}
+.story:hover{background:rgba(255,255,255,0.04)}
+.s-favicon{width:20px;height:20px;border-radius:4px;flex-shrink:0;margin-top:2px;background:rgba(255,255,255,0.07)}
+.story-body{flex:1;min-width:0}
+.story-meta{display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap}
+.s-tag{font-size:9px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:1px 5px;border-radius:2px}
+.t-geo{background:var(--blue2);color:var(--blue)}
+.t-econ{background:var(--green2);color:var(--green)}
+.t-ag{background:var(--accent2);color:var(--accent)}
+.s-date{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.35)}
+.story-title{font-size:12px;color:rgba(255,255,255,0.85);line-height:1.4;font-weight:500;margin-bottom:4px}
+.story-title a{color:inherit;text-decoration:none}
+.story-title a:hover{color:var(--accent)}
+.story-snippet{font-size:11px;color:rgba(255,255,255,0.5);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.news-placeholder{padding:32px 20px;text-align:center}
+.news-ph-icon{font-size:28px;margin-bottom:10px;opacity:.4}
+.news-ph-title{font-size:12px;font-weight:600;color:rgba(255,255,255,0.35);margin-bottom:6px}
+.news-ph-sub{font-size:11px;color:rgba(255,255,255,0.3);line-height:1.5}
+.load-row{padding:16px 14px;color:rgba(255,255,255,0.35);font-size:12px}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:16px 18px 24px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* KPI ROW — 4 across */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent) 50%,transparent);opacity:.45}
+.kpi-label{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.kpi-val{font-family:var(--mono);font-size:19px;font-weight:500;color:var(--text);line-height:1;margin-bottom:3px}
+.kpi-chg{font-family:var(--mono);font-size:11px}
+
+/* DUAL CHARTS */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.chart-section{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:14px}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.chart-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:7px}
+.wdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.chart-legend{display:flex;gap:12px}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);font-family:var(--mono)}
+.leg-line{width:14px;height:2px;border-radius:1px;flex-shrink:0}
+.chart-note{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px}
+.chart-wrap{position:relative;height:160px;width:100%}
+.chart-wrap canvas{display:block;width:100%!important;height:160px!important}
+
+/* CURRENCY LIST */
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.sec-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)}
+.sec-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.curr-list{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.curr-row{display:grid;grid-template-columns:130px 100px 80px 1fr 80px;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);transition:background .1s}
+.curr-row:last-child{border-bottom:none}
+.curr-row:hover{background:var(--bg3)}
+.curr-name-wrap{display:flex;align-items:center;gap:8px}
+.curr-sym{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--text);min-width:22px}
+.curr-info{display:flex;flex-direction:column}
+.curr-code{font-size:10px;font-weight:600;letter-spacing:0.06em;color:var(--text2);font-family:var(--mono)}
+.curr-fullname{font-size:10px;color:var(--text3)}
+.curr-rate-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);text-align:right}
+.curr-chg-val{font-family:var(--mono);font-size:11px;text-align:right}
+.curr-snippet{font-size:11px;color:var(--text2);line-height:1.4}
+.curr-src-col{font-size:9px;color:var(--text3);font-family:var(--mono);text-align:right;white-space:nowrap}
+.curr-src-col a{color:var(--text3);text-decoration:none}
+.curr-src-col a:hover{color:var(--accent)}
+
+/* BOTTOM: property + rental */
+.property-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.p-card{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+.p-card-head{padding:9px 12px;border-bottom:1px solid var(--border);font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:6px}
+.p-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border)}
+.p-row:last-of-type{border-bottom:none}
+.p-city{font-size:12px;color:var(--text2)}
+.p-right{text-align:right}
+.p-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)}
+.p-sub{font-size:10px;color:var(--text3)}
+.p-trend-up{color:var(--red);font-family:var(--mono);font-size:10px}
+.p-trend-dn{color:var(--green);font-family:var(--mono);font-size:10px}
+.p-footer{padding:6px 12px;font-size:10px;color:var(--text3);font-family:var(--mono)}
+.p-footer a{color:var(--text3);text-decoration:none}
+.p-footer a:hover{color:var(--accent)}
+
+/* WB */
+.wb-card{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.wb-head{padding:9px 14px;border-bottom:1px solid var(--border);font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:6px}
+.wb-row{display:grid;grid-template-columns:120px 1fr 1fr 1fr;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--border)}
+.wb-row:last-child{border-bottom:none}
+.wb-country{font-size:12px;color:var(--text2)}
+.wb-val{font-family:var(--mono);font-size:12px;color:var(--text);text-align:right}
+.wb-label{font-size:9px;color:var(--text3);text-align:right}
+
+/* NOTES */
+.notes-card{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.notes-head{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notes-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3)}
+.notes-saved{font-size:10px;color:var(--green);font-family:var(--mono);opacity:0;transition:opacity .3s}
+.notes-ta{width:100%;background:transparent;border:none;color:var(--text2);font-size:12px;font-family:var(--sans);line-height:1.6;padding:12px 14px;resize:none;outline:none;min-height:100px}
+.notes-ta::placeholder{color:var(--text3)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:24px;width:440px;max-width:95vw}
+.modal-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.mx{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1}
+.f-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.f-row{margin-bottom:14px}
+.f-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:12px;padding:7px 10px;font-family:var(--mono)}
+.f-input:focus{outline:none;border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.footer-bar{font-size:10px;color:var(--text3);font-family:var(--mono);text-align:right;padding-bottom:8px}
+
+.mload{padding:14px;color:var(--text3);font-size:12px}
+.spin{display:inline-block;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <svg class="logo-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="60" height="60" rx="12" fill="#131720"/>
+      <circle cx="30" cy="30" r="21" stroke="rgba(255,255,255,0.18)" stroke-width="0.9" fill="none"/>
+      <ellipse cx="30" cy="30" rx="21" ry="8" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" fill="none"/>
+      <ellipse cx="30" cy="30" rx="21" ry="15" stroke="rgba(255,255,255,0.09)" stroke-width="0.8" fill="none"/>
+      <line x1="9" y1="30" x2="51" y2="30" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+      <line x1="30" y1="9" x2="30" y2="51" stroke="rgba(255,255,255,0.12)" stroke-width="0.8"/>
+      <ellipse cx="30" cy="30" rx="8" ry="21" stroke="rgba(255,255,255,0.09)" stroke-width="0.8" fill="none"/>
+      <ellipse cx="30" cy="30" rx="15" ry="21" stroke="rgba(255,255,255,0.07)" stroke-width="0.8" fill="none"/>
+      <text x="30" y="36" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="15" fill="white" letter-spacing="1.5">GP</text>
+    </svg>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+  </div>
+  <div class="nav-center">
+    <button class="nav-tab active">Overview</button>
+    <button class="nav-tab soon" title="Coming soon">Space</button>
+  </div>
+  <div class="nav-right">
+    <span class="nav-time" id="nav-clock"></span>
+    <button class="btn" onclick="openModal()">⚙ Customize</button>
+    <button class="btn btn-accent" onclick="manualRefresh()">↻ Refresh</button>
+  </div>
+</nav>
+
+<div class="ticker">
+  <div class="ticker-track" id="ticker-track">
+    <span class="tick"><span class="tick-sym">LOADING MARKET DATA</span><span class="tick-val">—</span></span>
+  </div>
+</div>
+
+<div class="workspace">
+
+  <!-- NEWS COLUMN -->
+  <aside class="news-col">
+    <div class="news-tabs">
+      <button class="news-tab on" onclick="switchNewsTab('geo',this)">Geopolitics</button>
+      <button class="news-tab" onclick="switchNewsTab('econ',this)">Economics</button>
+      <button class="news-tab" onclick="switchNewsTab('ag',this)">Ag & Dev</button>
+    </div>
+    <div class="news-scroll" id="news-feed">
+      <div class="mload"><span class="spin"></span>Loading…</div>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <main class="main">
+
+    <!-- 4 KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">S&P 500 · SPY</div>
+        <div class="kpi-val" id="v-SPY">—</div>
+        <div class="kpi-chg" id="c-SPY"><span class="spin"></span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Nasdaq 100 · QQQ</div>
+        <div class="kpi-val" id="v-QQQ">—</div>
+        <div class="kpi-chg" id="c-QQQ"><span class="spin"></span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Dow Jones · DIA</div>
+        <div class="kpi-val" id="v-DIA">—</div>
+        <div class="kpi-chg" id="c-DIA"><span class="spin"></span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Euro Stoxx 50 · FEZ</div>
+        <div class="kpi-val" id="v-FEZ">—</div>
+        <div class="kpi-chg" id="c-FEZ"><span class="spin"></span></div>
+      </div>
+    </div>
+
+    <!-- 2 CHARTS SIDE BY SIDE -->
+    <div class="chart-row">
+      <div class="chart-section">
+        <div class="chart-header">
+          <span class="chart-title"><span class="wdot" style="background:var(--blue)"></span>US Markets</span>
+          <div class="chart-legend">
+            <span class="leg-item"><span class="leg-line" style="background:#4f9cf9"></span>SPY</span>
+            <span class="leg-item"><span class="leg-line" style="background:#3ecf8e"></span>QQQ</span>
+            <span class="leg-item"><span class="leg-line" style="background:#f5a623"></span>DIA</span>
+          </div>
+        </div>
+        <div class="chart-note">% change from session open · builds over time</div>
+        <div class="chart-wrap"><canvas id="us-chart" role="img" aria-label="US markets session trend"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-header">
+          <span class="chart-title"><span class="wdot" style="background:var(--purple)"></span>Euro Stoxx 50</span>
+          <div class="chart-legend">
+            <span class="leg-item"><span class="leg-line" style="background:#a78bfa"></span>FEZ</span>
+          </div>
+        </div>
+        <div class="chart-note">% change from session open · builds over time</div>
+        <div class="chart-wrap"><canvas id="eu-chart" role="img" aria-label="Euro Stoxx session trend"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CURRENCIES -->
+    <div style="margin-bottom:14px">
+      <div class="sec-head">
+        <span class="sec-title">Currency indicators</span>
+        <span class="sec-sub">Rate per 1 USD · daily change · ECB · IMF · AfDB</span>
+      </div>
+      <div class="curr-list" id="curr-list">
+        <div class="mload"><span class="spin"></span>Loading currencies…</div>
+      </div>
+    </div>
+
+    <!-- PROPERTY + RENTAL -->
+    <div class="property-grid">
+      <div class="p-card">
+        <div class="p-card-head"><span class="wdot" style="background:var(--blue)"></span>Median rental — 1BR/mo</div>
+        <div class="p-row"><span class="p-city">New York City</span><div class="p-right"><div class="p-val">$3,800</div><div class="p-trend-up">▲ 4.2% YoY</div></div></div>
+        <div class="p-row"><span class="p-city">Washington DC</span><div class="p-right"><div class="p-val">$2,400</div><div class="p-trend-up">▲ 2.8% YoY</div></div></div>
+        <div class="p-row"><span class="p-city">Denver</span><div class="p-right"><div class="p-val">$1,750</div><div class="p-trend-dn">▼ 1.1% YoY</div></div></div>
+        <div class="p-row"><span class="p-city">Milan</span><div class="p-right"><div class="p-val">€1,800</div><div class="p-trend-up">▲ 6.3% YoY</div></div></div>
+        <div class="p-footer">Aug 2026 · <a href="https://www.zillow.com/research/" target="_blank">Zillow Research</a> · <a href="https://www.idealista.com" target="_blank">Idealista</a></div>
+      </div>
+      <div class="p-card">
+        <div class="p-card-head"><span class="wdot" style="background:var(--accent)"></span>Median home price</div>
+        <div class="p-row"><span class="p-city">New York City</span><div class="p-right"><div class="p-val">$775K</div><div class="p-trend-up">▲ 5.8% YoY</div></div></div>
+        <div class="p-row"><span class="p-city">Washington DC</span><div class="p-right"><div class="p-val">$625K</div><div class="p-trend-up">▲ 3.4% YoY</div></div></div>
+        <div class="p-row"><span class="p-city">Denver</span><div class="p-right"><div class="p-val">$548K</div><div class="p-trend-dn">▼ 0.7% YoY</div></div></div>
+        <div class="p-row"><span class="p-city">Milan</span><div class="p-right"><div class="p-val">€420K</div><div class="p-trend-up">▲ 7.1% YoY</div></div></div>
+        <div class="p-footer">Aug 2026 · <a href="https://www.zillow.com/research/" target="_blank">Zillow Research</a> · <a href="https://www.idealista.com" target="_blank">Idealista</a></div>
+      </div>
+    </div>
+
+    <!-- WORLD BANK EAST AFRICA -->
+    <div class="wb-card">
+      <div class="wb-head"><span class="wdot" style="background:var(--green)"></span>World Bank — East Africa economic indicators</div>
+      <div id="wb-panel"><div class="mload"><span class="spin"></span>Loading World Bank data…</div></div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="notes-card">
+      <div class="notes-head">
+        <span class="notes-title">Notes & goals</span>
+        <span class="notes-saved" id="notes-saved">Saved</span>
+      </div>
+      <textarea class="notes-ta" id="notes-ta" placeholder="Your notes, goals, reminders — saves automatically…" rows="5"></textarea>
+    </div>
+
+    <div class="footer-bar" id="footer-note">Initializing…</div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title">Customize terminal <button class="mx" onclick="closeModal()">×</button></div>
+    <div class="f-row">
+      <div class="f-label">Browser tab title</div>
+      <input class="f-input" id="cfg-name" placeholder="GP Intelligence Terminal"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveConfig()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var FKEY  = 'da708l1r01qqqkkhib1gda708l1r01qqqkkhib20';
+var FBASE = 'https://finnhub.io/api/v1';
+
+// ── SYMBOLS ──────────────────────────────────────────────
+var INDEX_SYMS  = ['SPY','QQQ','DIA','FEZ'];
+var TICKER_SYMS = ['GLD','USO','CPER','UNG','WEAT','EWU','EWJ'];
+var TICKER_META = {
+  GLD:  {l:'Gold',            u:'/oz'},
+  USO:  {l:'Oil (WTI)',       u:'/bbl'},
+  CPER: {l:'Copper',          u:'/lb'},
+  UNG:  {l:'Natural Gas',     u:'/MMBtu'},
+  WEAT: {l:'Wheat',           u:'/bu'},
+  EWU:  {l:'FTSE 100 (UK)',   u:''},
+  EWJ:  {l:'Nikkei 225 (JP)', u:''},
+};
+var ALL_SYMS = ['SPY','QQQ','DIA','FEZ','GLD','USO','CPER','UNG','WEAT','EWU','EWJ'];
+
+// ── SESSION HISTORY ───────────────────────────────────────
+var hist = {};
+ALL_SYMS.forEach(function(s){ hist[s]={t:[],p:[]}; });
+
+var usChart = null;
+var euChart = null;
+var nextRef = 300;
+
+// ── CURRENCIES ────────────────────────────────────────────
+var CURRENCIES = [
+  {code:'USD',sym:'$',  name:'US Dollar',           etf:'UUP', snippet:'The dollar index reflects broad USD strength driven by Fed rate guidance and Treasury yield differentials versus other G10 central banks.',src:'IMF',srcUrl:'https://www.imf.org/en/Publications/WEO',srcDomain:'imf.org'},
+  {code:'EUR',sym:'€',  name:'Euro',                etf:'FXE', snippet:'The euro tracks ECB policy relative to the Fed. Rate differentials and eurozone growth data are the primary near-term drivers of EUR/USD direction.',src:'IMF',srcUrl:'https://www.imf.org/en/Publications/WEO',srcDomain:'imf.org'},
+  {code:'GBP',sym:'£',  name:'British Pound',       etf:'FXB', snippet:'Sterling is sensitive to Bank of England guidance and UK inflation data. Post-Brexit trade dynamics continue to weigh on longer-term positioning.',src:'IMF',srcUrl:'https://www.imf.org/en/Publications/WEO',srcDomain:'imf.org'},
+  {code:'JPY',sym:'¥',  name:'Japanese Yen',        etf:null,  snippet:'The yen has faced sustained pressure from the Bank of Japan\'s accommodative stance. Normalization signals have reduced some pressure but it remains reactive to US yields.',src:'IMF',srcUrl:'https://www.imf.org/en/Publications/WEO',srcDomain:'imf.org'},
+  {code:'CNY',sym:'¥',  name:'Chinese Yuan',        etf:null,  snippet:'The yuan is managed within a PBOC band. Weakness reflects slowing domestic growth and property sector stress, with the PBOC intervening to limit depreciation.',src:'World Bank',srcUrl:'https://www.worldbank.org/en/region/eap',srcDomain:'worldbank.org'},
+  {code:'XOF',sym:'₣',  name:'W. African CFA Franc',etf:null,  snippet:'Pegged to the euro, the CFA tracks EUR/USD movements directly. Political instability across ECOWAS member states has renewed debate about the long-term franc zone architecture.',src:'AfDB',srcUrl:'https://www.afdb.org/en/news-and-events',srcDomain:'afdb.org'},
+  {code:'KES',sym:'KSh',name:'Kenyan Shilling',     etf:null,  snippet:'Relative resilience from remittances and tourism recovery, though dollar strength and elevated import costs remain headwinds. The CBK maintains a tight stance to anchor inflation.',src:'AfDB',srcUrl:'https://www.afdb.org/en/news-and-events',srcDomain:'afdb.org'},
+  {code:'UGX',sym:'USh',name:'Ugandan Shilling',    etf:null,  snippet:'Faces pressure from import demand and dollar strength. Oil sector development adds to import requirements while the Bank of Uganda monitors reserves closely.',src:'AfDB',srcUrl:'https://www.afdb.org/en/news-and-events',srcDomain:'afdb.org'},
+  {code:'TZS',sym:'TSh',name:'Tanzanian Shilling',  etf:null,  snippet:'Relatively stable, underpinned by strong gold export earnings and tourism recovery. The Bank of Tanzania maintains adequate reserves as a buffer against external shocks.',src:'World Bank',srcUrl:'https://www.worldbank.org/en/region/afr',srcDomain:'worldbank.org'},
+  {code:'MWK',sym:'MK', name:'Malawian Kwacha',     etf:null,  snippet:'Under significant pressure from limited FX reserves and balance-of-payments challenges. An IMF-supported program provides some stabilization but structural vulnerabilities persist.',src:'IMF',srcUrl:'https://www.imf.org/en/Publications/REO/SSA',srcDomain:'imf.org'},
+];
+
+// ── NEWS ─────────────────────────────────────────────────
+// NEWS_FEEDS kept for ag placeholder only
+var NEWS_FEEDS = { geo: null, econ: null, ag: null };
+var TAG_CLS = {geo:'t-geo',econ:'t-econ',ag:'t-ag'};
+var TAG_LBL = {geo:'Geopolitics',econ:'Economics',ag:'Ag & Dev'};
+var storyCache = {geo:[],econ:[],ag:[]};
+var curTab = 'geo';
+
+// ── CLOCK ─────────────────────────────────────────────────
+function clock(){
+  var n = new Date();
+  document.getElementById('nav-clock').textContent =
+    n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+
+    n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'});
+  nextRef--;
+  if(nextRef<=0){nextRef=300;loadMarkets();}
+}
+
+// ── MARKET UTILS ──────────────────────────────────────────
+function fmtPct(dp){
+  if(dp==null||isNaN(dp)) return '<span style="color:var(--text3)">—</span>';
+  var cls=dp>0?'up':dp<0?'dn':'';
+  var arr=dp>0?'▲':dp<0?'▼':'▸';
+  return '<span class="'+cls+'">'+arr+' '+Math.abs(dp).toFixed(2)+'%</span>';
+}
+function fmtVal(c){return(!c||isNaN(c))?'—':'$'+c.toFixed(2);}
+
+async function getQuote(sym){
+  var r=await fetch(FBASE+'/quote?symbol='+sym+'&token='+FKEY);
+  if(!r.ok) throw new Error();
+  var d=await r.json();
+  if(!d||!d.c||d.c===0) throw new Error();
+  return d;
+}
+
+// ── CHARTS ────────────────────────────────────────────────
+function makeChartOpts(callback){
+  return {
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+      backgroundColor:'#1a2030',titleColor:'#8892a4',bodyColor:'#e2e8f4',
+      borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+      callbacks:{label:callback}}},
+    scales:{
+      x:{ticks:{color:'#4a5568',font:{size:9,family:'JetBrains Mono'},maxTicksLimit:8},
+         grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'}},
+      y:{ticks:{color:'#4a5568',font:{size:9,family:'JetBrains Mono'},
+           callback:function(v){return(v>=0?'+':'')+v.toFixed(1)+'%';}},
+         grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'},position:'right'}
+    },
+    interaction:{mode:'nearest',axis:'x',intersect:false},animation:{duration:400}
+  };
+}
+
+function initCharts(){
+  usChart = new Chart(document.getElementById('us-chart'),{
+    type:'line',
+    data:{labels:[],datasets:[
+      {label:'S&P 500',data:[],borderColor:'#4f9cf9',borderWidth:2,fill:false,pointRadius:0,tension:0.3},
+      {label:'Nasdaq', data:[],borderColor:'#3ecf8e',borderWidth:2,fill:false,pointRadius:0,tension:0.3},
+      {label:'Dow',    data:[],borderColor:'#f5a623',borderWidth:2,fill:false,pointRadius:0,tension:0.3},
+    ]},
+    options:makeChartOpts(function(ctx){return' '+ctx.dataset.label+': '+(ctx.parsed.y>=0?'+':'')+ctx.parsed.y.toFixed(2)+'%';})
+  });
+  euChart = new Chart(document.getElementById('eu-chart'),{
+    type:'line',
+    data:{labels:[],datasets:[
+      {label:'Euro Stoxx 50',data:[],borderColor:'#a78bfa',borderWidth:2,fill:true,backgroundColor:'rgba(167,139,250,0.06)',pointRadius:0,tension:0.3},
+    ]},
+    options:makeChartOpts(function(ctx){return' FEZ: '+(ctx.parsed.y>=0?'+':'')+ctx.parsed.y.toFixed(2)+'%';})
+  });
+}
+
+function updateUSChart(){
+  if(!usChart) return;
+  var syms=['SPY','QQQ','DIA'];
+  var maxLen=Math.max.apply(null,syms.map(function(s){return hist[s].t.length;}));
+  if(maxLen<2) return;
+  var longest=syms.filter(function(s){return hist[s].t.length===maxLen;})[0];
+  usChart.data.labels=hist[longest].t;
+  syms.forEach(function(sym,i){
+    var p=hist[sym].p; if(!p.length) return;
+    var base=p[0];
+    usChart.data.datasets[i].data=p.map(function(v){return parseFloat(((v-base)/base*100).toFixed(3));});
+  });
+  usChart.update('none');
+}
+
+function updateEUChart(){
+  if(!euChart) return;
+  var p=hist['FEZ'].p;
+  if(p.length<2) return;
+  var base=p[0];
+  euChart.data.labels=hist['FEZ'].t;
+  euChart.data.datasets[0].data=p.map(function(v){return parseFloat(((v-base)/base*100).toFixed(3));});
+  euChart.update('none');
+}
+
+// ── LOAD MARKETS ──────────────────────────────────────────
+async function loadMarkets(){
+  var res={};
+  var t=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  await Promise.allSettled(ALL_SYMS.map(async function(sym){
+    try{
+      var q=await getQuote(sym);
+      res[sym]=q;
+      hist[sym].t.push(t);
+      hist[sym].p.push(q.c);
+      if(hist[sym].p.length>100){hist[sym].t.shift();hist[sym].p.shift();}
+    }catch(e){}
+  }));
+
+  // KPI cards
+  INDEX_SYMS.forEach(function(sym){
+    var q=res[sym];
+    var vEl=document.getElementById('v-'+sym);
+    var cEl=document.getElementById('c-'+sym);
+    if(!vEl) return;
+    if(q){vEl.textContent=fmtVal(q.c);cEl.innerHTML=fmtPct(q.dp);}
+    else{vEl.textContent='—';cEl.innerHTML='<span style="color:var(--text3)">—</span>';}
+  });
+
+  // Ticker
+  var ticks=TICKER_SYMS.map(function(sym){
+    var q=res[sym]; var m=TICKER_META[sym]||{l:sym,u:''};
+    if(!q) return '<span class="tick"><span class="tick-sym">'+m.l+'</span><span class="tick-val">—</span></span>';
+    var cls=q.d>=0?'up':'dn'; var arr=q.d>=0?'▲':'▼';
+    return '<span class="tick"><span class="tick-sym">'+m.l+'</span><span class="tick-val">'+fmtVal(q.c)+'<span class="tick-unit">'+m.u+'</span></span><span class="'+cls+'">'+arr+Math.abs(q.dp||0).toFixed(2)+'%</span></span>';
+  }).join('');
+  document.getElementById('ticker-track').innerHTML=ticks+ticks;
+
+  updateUSChart();
+  updateEUChart();
+
+  // Update currency daily change from Finnhub ETF proxies
+  updateCurrencyChanges(res);
+
+  var now=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('footer-note').textContent=
+    'Data APIs: Finnhub · Frankfurter (ECB) · World Bank Open Data · GP API (Vercel) · Updated '+now+' · Auto-refreshes every 5 min';
+}
+
+// ── CURRENCIES ────────────────────────────────────────────
+var currRates={};
+var currChanges={};
+
+async function loadCurrencies(){
+  // Fetch rates from exchangerate-api (covers all our currencies)
+  try{
+    var r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    if(r.ok){var d=await r.json(); currRates=d.rates||{};}
+  }catch(e){
+    // Fallback to Frankfurter for major pairs
+    try{
+      var r2=await fetch('https://api.frankfurter.app/latest?from=USD');
+      if(r2.ok){var d2=await r2.json(); currRates=d2.rates||{};}
+    }catch(e2){}
+  }
+  currRates['USD']=1;
+  if(currRates['EUR']&&!currRates['XOF']) currRates['XOF']=parseFloat((655.957/currRates['EUR']).toFixed(2));
+  renderCurrencies();
+}
+
+function updateCurrencyChanges(marketRes){
+  // Map ETF proxies to currency codes
+  var etfMap={UUP:'USD',FXE:'EUR',FXB:'GBP'};
+  for(var etf in etfMap){
+    var q=marketRes[etf];
+    if(q&&q.dp!=null) currChanges[etfMap[etf]]=q.dp;
+  }
+  renderCurrencies();
+}
+
+function renderCurrencies(){
+  var html=CURRENCIES.map(function(c){
+    var raw=currRates[c.code];
+    var rateStr=raw?raw.toLocaleString('en-US',{maximumFractionDigits:2}):'—';
+    var chg=currChanges[c.code];
+    var chgHtml;
+    if(chg!=null){
+      var cls=chg>0?'up':chg<0?'dn':'';
+      var arr=chg>0?'▲':chg<0?'▼':'▸';
+      chgHtml='<span class="'+cls+'">'+arr+' '+Math.abs(chg).toFixed(2)+'%</span>';
+    }else{
+      chgHtml='<span style="color:var(--text3);font-size:9px">ETF n/a</span>';
+    }
+    var favicon='https://www.google.com/s2/favicons?domain='+c.srcDomain+'&sz=14';
+    return '<div class="curr-row">'+
+      '<div class="curr-name-wrap">'+
+        '<span class="curr-sym">'+c.sym+'</span>'+
+        '<div class="curr-info">'+
+          '<span class="curr-code">'+c.code+'</span>'+
+          '<span class="curr-fullname">'+c.name+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="curr-rate-val">'+rateStr+'</div>'+
+      '<div class="curr-chg-val">'+chgHtml+'</div>'+
+      '<div class="curr-snippet">'+c.snippet+'</div>'+
+      '<div class="curr-src-col">'+
+        '<img src="'+favicon+'" style="width:12px;height:12px;border-radius:2px;vertical-align:middle;margin-right:3px" onerror="this.style.display=\'none\'">'+
+        '<a href="'+c.srcUrl+'" target="_blank">'+c.src+'</a>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('curr-list').innerHTML=html;
+}
+
+// ── WORLD BANK ────────────────────────────────────────────
+var WB_COUNTRIES=[{code:'KE',name:'Kenya'},{code:'TZ',name:'Tanzania'},{code:'UG',name:'Uganda'},{code:'MW',name:'Malawi'}];
+
+async function loadWorldBank(){
+  var panel=document.getElementById('wb-panel');
+  // Add header row
+  var rows='<div class="wb-row" style="background:var(--bg3)">'+
+    '<span class="wb-country" style="font-weight:600;color:var(--text3)">Country</span>'+
+    '<span class="wb-label" style="text-align:right">GDP Growth</span>'+
+    '<span class="wb-label" style="text-align:right">Inflation</span>'+
+    '<span class="wb-label" style="text-align:right">Year</span>'+
+  '</div>';
+  try{
+    for(var i=0;i<WB_COUNTRIES.length;i++){
+      var c=WB_COUNTRIES[i];
+      var gdpRes=await fetch('https://api.worldbank.org/v2/country/'+c.code+'/indicator/NY.GDP.MKTP.KD.ZG?format=json&mrv=1&per_page=1');
+      var inflRes=await fetch('https://api.worldbank.org/v2/country/'+c.code+'/indicator/FP.CPI.TOTL.ZG?format=json&mrv=1&per_page=1');
+      var gdpD=await gdpRes.json();
+      var inflD=await inflRes.json();
+      var gdpVal=gdpD[1]&&gdpD[1][0]&&gdpD[1][0].value!=null?gdpD[1][0].value.toFixed(1)+'%':'—';
+      var inflVal=inflD[1]&&inflD[1][0]&&inflD[1][0].value!=null?inflD[1][0].value.toFixed(1)+'%':'—';
+      var yr=gdpD[1]&&gdpD[1][0]?gdpD[1][0].date:'';
+      var gdpN=parseFloat(gdpVal);
+      var inflN=parseFloat(inflVal);
+      rows+='<div class="wb-row">'+
+        '<span class="wb-country">'+c.name+'</span>'+
+        '<span class="wb-val '+(gdpN>=0?'up':'dn')+'">'+gdpVal+'</span>'+
+        '<span class="wb-val">'+inflVal+'</span>'+
+        '<span class="wb-val" style="color:var(--text3)">'+yr+'</span>'+
+      '</div>';
+    }
+    rows+='<div style="padding:6px 14px;font-size:10px;color:var(--text3);font-family:var(--mono)">'+
+      'Source: <a href="https://data.worldbank.org" target="_blank" style="color:var(--text3);text-decoration:none">World Bank Open Data</a></div>';
+    panel.innerHTML=rows;
+  }catch(e){
+    panel.innerHTML='<div class="mload" style="color:var(--text3)">World Bank data unavailable — check connection</div>';
+  }
+}
+
+// ── NEWS via allorigins proxy (parses XML directly) ────────
+// parseRSS removed — using NewsAPI directly
+
+function fmtDate(str){
+  if(!str) return '';
+  var d=new Date(str); if(isNaN(d)) return '';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function timeAgo(str){
+  if(!str) return '';
+  var d=new Date(str); if(isNaN(d)) return '';
+  var m=Math.floor((Date.now()-d)/60000);
+  if(m<60) return m+'m ago';
+  if(m<1440) return Math.floor(m/60)+'h ago';
+  return Math.floor(m/1440)+'d ago';
+}
+
+var GP_API = 'https://gp-api-nu.vercel.app';
+
+async function fetchNewsVercel(tab){
+  var r = await fetch(GP_API + '/api/news?tab=' + tab);
+  if(!r.ok) throw new Error('API error ' + r.status);
+  var d = await r.json();
+  if(d.error) throw new Error(d.error);
+  return (d.articles||[]).map(function(a){
+    return {
+      title:      a.title||'',
+      url:        a.url||'#',
+      snippet:    a.snippet||'',
+      domain:     a.domain||'',
+      sourceName: a.sourceName||'',
+      date:       fmtDate(a.pubDate),
+      time:       timeAgo(a.pubDate),
+      rawDate:    a.pubDate||'',
+    };
+  });
+}
+
+async function loadNewsTab(tab){
+  var feedEl=document.getElementById('news-feed');
+  if(tab === 'ag'){
+    feedEl.innerHTML='<div class="news-placeholder">'+
+      '<div class="news-ph-icon">🌱</div>'+
+      '<div class="news-ph-title">Ag & Development</div>'+
+      '<div class="news-ph-sub">Feed coming in next build.</div>'+
+    '</div>';
+    return;
+  }
+  feedEl.innerHTML='<div class="mload"><span class="spin"></span>Loading…</div>';
+  try{
+    var stories = await fetchNewsVercel(tab);
+    storyCache[tab] = stories;
+    renderStories(tab, stories);
+  }catch(e){
+    feedEl.innerHTML='<div class="mload">Could not load stories. <button onclick="manualRefresh()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;">Retry ↺</button></div>';
+  }
+}
+
+function renderStories(tab,stories){
+  var feedEl=document.getElementById('news-feed');
+  if(!stories.length){
+    feedEl.innerHTML='<div class="mload">No stories loaded. Try refreshing.</div>';
+    return;
+  }
+  feedEl.innerHTML=stories.map(function(s){
+    var fav=s.domain?'https://www.google.com/s2/favicons?domain='+s.domain+'&sz=32':'';
+    var img=fav?'<img class="s-favicon" src="'+fav+'" width="20" height="20" onerror="this.style.display=\'none\'">':'<div class="s-favicon"></div>';
+    var meta=[s.time,s.date].filter(Boolean).join(' · ');
+    return '<div class="story">'+img+
+      '<div class="story-body">'+
+        '<div class="story-meta">'+
+          '<span class="s-tag '+TAG_CLS[tab]+'">'+TAG_LBL[tab]+'</span>'+
+          (meta?'<span class="s-date">'+meta+'</span>':'')+
+        '</div>'+
+        '<div class="story-title"><a href="'+s.url+'" target="_blank">'+s.title+'</a></div>'+
+        (s.snippet?'<div class="story-snippet">'+s.snippet+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function switchNewsTab(tab,btn){
+  curTab=tab;
+  document.querySelectorAll('.news-tab').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  if(storyCache[tab]&&storyCache[tab].length){
+    renderStories(tab,storyCache[tab]);
+  }else{
+    loadNewsTab(tab);
+  }
+}
+
+// ── NOTES ─────────────────────────────────────────────────
+function initNotes(){
+  var ta=document.getElementById('notes-ta');
+  var saved=document.getElementById('notes-saved');
+  var stored=localStorage.getItem('gp-notes');
+  if(stored) ta.value=stored;
+  var timer;
+  ta.addEventListener('input',function(){
+    clearTimeout(timer);
+    timer=setTimeout(function(){
+      localStorage.setItem('gp-notes',ta.value);
+      saved.style.opacity='1';
+      setTimeout(function(){saved.style.opacity='0';},1500);
+    },800);
+  });
+}
+
+// ── CONFIG ────────────────────────────────────────────────
+function openModal(){document.getElementById('cfg-name').value=localStorage.getItem('gp-name')||'';document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function saveConfig(){
+  var name=document.getElementById('cfg-name').value.trim();
+  if(name) document.title=name;
+  localStorage.setItem('gp-name',name);
+  closeModal();
+}
+function applyConfig(){var n=localStorage.getItem('gp-name');if(n) document.title=n;}
+function manualRefresh(){nextRef=300;loadMarkets();loadNewsTab(curTab);}
+
+// ── INIT ──────────────────────────────────────────────────
+applyConfig();
+initCharts();
+initNotes();
+setInterval(clock,1000);
+clock();
+Promise.all([
+  loadMarkets(),
+  loadCurrencies(),
+  loadNewsTab('geo'),
+  loadWorldBank(),
+]);
+// Pre-load econ tab silently
+setTimeout(function(){if(!storyCache.econ.length) loadNewsTab('econ');},5000);
+</script>
+</body>
+</html>
